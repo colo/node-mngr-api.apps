@@ -1,0 +1,31 @@
+{
+  "name": "apache",
+  "version": "0.0.1",
+  "description": "Apache App",
+  "author": {
+    "name": "Luciano Bueno",
+    "email": "glamero@gmail.com"
+  },
+  "main": "./",
+  "engines": {
+    "node": ">= 0.10.21"
+  },
+  "dependencies": {
+    "caseswitcher": "^1.2.0",
+    "config-general": "^0.2.0",
+    "lockfile": "^1.0.3",
+    "mootools": "1.4",
+    "tonto": "^0.1.1"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://www.opensource.org/licenses/MIT"
+    }
+  ],
+  "keywords": [
+    "apache"
+  ]
+}

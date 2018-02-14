@@ -1,0 +1,84 @@
+{
+  "_from": "tonto@^0.1.1",
+  "_id": "tonto@0.1.1",
+  "_inBundle": false,
+  "_integrity": "sha1-gNktLn+zM+hEmLIk4vjz6i3rCU0=",
+  "_location": "/tonto",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "tonto@^0.1.1",
+    "name": "tonto",
+    "escapedName": "tonto",
+    "rawSpec": "^0.1.1",
+    "saveSpec": null,
+    "fetchSpec": "^0.1.1"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/tonto/-/tonto-0.1.1.tgz",
+  "_shasum": "80d92d2e7fb333e84498b224e2f8f3ea2deb094d",
+  "_spec": "tonto@^0.1.1",
+  "_where": "/home/colo/projects/node-mngr-api/apps/apache",
+  "author": {
+    "name": "FreeAllMedia, LLC",
+    "email": "fam-operations@freeallmedia.com"
+  },
+  "bugs": {
+    "url": "https://github.com/FreeAllMedia/tonto/issues"
+  },
+  "bundleDependencies": false,
+  "config": {
+    "travis-cov": {
+      "threshold": 100
+    },
+    "blanket": {
+      "pattern": [
+        "/tonto/lib/"
+      ]
+    }
+  },
+  "contributors": [
+    {
+      "name": "dcrockwell",
+      "email": "dcautomates@gmail.com"
+    },
+    {
+      "name": "paulgoggin",
+      "email": "pgoggin@gmail.com"
+    }
+  ],
+  "dependencies": {
+    "change-case": "2.3.x",
+    "is-js": "0.1.x",
+    "js-yaml": "3.3.x",
+    "methodical": "0.0.x"
+  },
+  "deprecated": false,
+  "description": "Tonto.js: Apache Config File Generator",
+  "devDependencies": {
+    "grunt": "0.4.x",
+    "grunt-cli": "0.1.x",
+    "grunt-complexity": "0.3.x",
+    "grunt-contrib-jshint": "0.11.x",
+    "grunt-mocha-cov": "0.4.x",
+    "mocha": "2.2.x",
+    "mocha-lcov-reporter": "0.0.x",
+    "should": "7.0.x",
+    "sinon": "1.15.x"
+  },
+  "homepage": "https://github.com/FreeAllMedia/tonto#readme",
+  "license": "GPLv3",
+  "main": "./lib/tonto.js",
+  "name": "tonto",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FreeAllMedia/tonto.git"
+  },
+  "scripts": {
+    "test": "mocha -w ./tests/*.js -R spec"
+  },
+  "version": "0.1.1"
+}

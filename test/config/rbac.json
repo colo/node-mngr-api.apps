@@ -1,0 +1,22 @@
+{
+  "roles":[
+	{
+	  "id": "user",
+	  "permissions":["abmView", "testGet"]
+	}
+  ],
+  "permissions":[
+	{
+	  "id": "abmView",
+	  "name": "",
+	  "operation": "view",
+	  "resource": "abm"
+	},
+	{
+	  "id": "testGet",
+	  "name": "",
+	  "operation": "get",
+	  "resource": "b128a2dc-ed71-50ea-af05-e0605e42f45a_/"
+	}
+  ]
+}
