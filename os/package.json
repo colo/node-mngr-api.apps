@@ -13,6 +13,7 @@
   "dependencies": {
     "blockdevice": "^0.5.1",
     "etc-passwd": "^0.1.1",
+    "mootools": "^1.5.2",
     "q": "^1.4.1",
     "uid-username": "0.0.2"
   },
