@@ -54,7 +54,7 @@ module.exports = new Class({
 		
 		//scan_dirs: ['/dev/', '/dev/vol0'],
 		//scan: /^(hd|sd|xvd)([^0-9]*)$/,
-		scan: /hd|sd|xvd/,
+		scan: /hd|sd|xvd|vd/,
 		//([^0-9]*)
 		
 		
