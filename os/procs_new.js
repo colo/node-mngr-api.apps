@@ -8,6 +8,7 @@ var debug_internals = require('debug')('api:apps:os:procs:Internals')
 // 		Q = require('q');
 
 var chokidar = require('chokidar')
+var watch = require('node-watch')
 
 const App =  process.env.NODE_ENV === 'production'
       ? require('./config/prod.conf')
@@ -220,15 +221,15 @@ module.exports = new Class({
 
     let self = this
 
-    //try: https://www.npmjs.com/package/node-watch
-
+    //https://www.npmjs.com/package/node-watch
+    //try:  https://github.com/bevry/watchr
     chokidar.watch('/proc', {
     	// cwd: '/proc/',
       // ignored: /(^|[\/\\])\..|[A-Za-z]+$/,
       ignored: /(^|[\/\\])\..|^\/[A-Za-z]+\/[a-zA-Z|\.|\-|\_]+$/,
       // ignored: /([^0-9]*)/g,
-    	depth: 1,
-      usePolling: true,
+    	depth: 0,
+      // usePolling: true,
       // ignored: /(^|[\/\\])\..|[A-Za-z]+/,
 
     })
@@ -272,13 +273,29 @@ module.exports = new Class({
     //
     //   // delete self.procs[path]
     // })
-	  // .on('error', () => {}
-		// 	// error => debug_internals(`Watcher error: ${error}`)
+	  // .on('error',
+    //   // () => {}
+		// 	error => debug_internals(`Watcher error: ${error}`)
 		// )
 	  // .on('ready', () => debug_internals('Initial scan complete. Ready for changes'))
 	  // .on('raw', (event, path, details) => {
 	  //   debug_internals('Raw event info:', event, path, details);
 	  // })
+
+    // try{
+    //   let watcher = watch('/proc/', {
+    //     // recursive: true,
+    //     filter: /\d$/
+    //   })
+    //
+    //   watcher.on('change', function(evt, path) {
+    //    debug_internals(`Directory ${path} has changed`)
+    //   })
+    //
+    //   watcher.on('error', error => debug_internals(`Watcher error: ${error}`));
+    //
+    // }
+    // catch(e){}
 
 		this.log('os-procs', 'info', 'os-procs started');
   },
