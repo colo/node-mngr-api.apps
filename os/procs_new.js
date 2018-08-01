@@ -3,12 +3,16 @@
 var debug = require('debug')('api:apps:os:procs');
 var debug_internals = require('debug')('api:apps:os:procs:Internals')
 
+var fs = require('fs')
+var procfs = require('procfs-stats')
+
 // var path = require('path'),
 // 		exec = require('child_process').exec,
 // 		Q = require('q');
 
-var chokidar = require('chokidar')
-var watch = require('node-watch')
+// var chokidar = require('chokidar')
+// var watch = require('node-watch')
+// var watchr = require('watchr')
 
 const App =  process.env.NODE_ENV === 'production'
       ? require('./config/prod.conf')
@@ -109,9 +113,40 @@ module.exports = new Class({
 		// 	res.json(result);
 		// })
 		// .done();
-    res.json(this.procs)
+    // res.json(this.procs)
+    this._procs(procs => res.json(procs))
   },
-  _procs: function(pid, format){
+  // _prop: function(procs, pid, prop, cb){
+  _procs_props(procs, props, cb){
+    props = (Array.isArray(props)) ? props : [props]
+    Object.each(procs, function(proc, pid){
+      Array.each(props, function(prop, index){
+        this._proc_prop(pid, prop, function(err, data){
+          if(!err)
+            proc[prop] = data
+        })
+      })
+    }.bind(this))
+  },
+  _proc_prop: function(pid, prop, cb){
+      let ps = procfs(pid)
+      ps[prop](cb)
+  },
+  _procs: function(cb){
+
+    fs.readdir('/proc/', function(err, files){
+      let procs = {}
+      if(!err)
+        Array.each(files, function(file){
+          let pid = file * 1//type cast
+          if(!isNaN(pid))
+            procs[pid] = {}
+        })
+        // debug_internals(files)
+
+      cb(procs)
+    })
+
 		// var deferred = Q.defer();
     //
 		// var command = this.command;
@@ -223,25 +258,25 @@ module.exports = new Class({
 
     //https://www.npmjs.com/package/node-watch
     //try:  https://github.com/bevry/watchr
-    chokidar.watch('/proc', {
-    	// cwd: '/proc/',
-      // ignored: /(^|[\/\\])\..|[A-Za-z]+$/,
-      ignored: /(^|[\/\\])\..|^\/[A-Za-z]+\/[a-zA-Z|\.|\-|\_]+$/,
-      // ignored: /([^0-9]*)/g,
-    	depth: 0,
-      // usePolling: true,
-      // ignored: /(^|[\/\\])\..|[A-Za-z]+/,
-
-    })
-    .on('all', (event, path) => {
-      // path = path * 1
-
-      // if(!isNaN(path))
-        console.log(event, path);
-    })
-    .on('error',
-			error => debug_internals(`Watcher error: ${error}`)
-		)
+    // chokidar.watch('/proc', {
+    // 	// cwd: '/proc/',
+    //   // ignored: /(^|[\/\\])\..|[A-Za-z]+$/,
+    //   ignored: /(^|[\/\\])\..|^\/[A-Za-z]+\/[a-zA-Z|\.|\-|\_]+$/,
+    //   // ignored: /([^0-9]*)/g,
+    // 	depth: 0,
+    //   // usePolling: true,
+    //   // ignored: /(^|[\/\\])\..|[A-Za-z]+/,
+    //
+    // })
+    // .on('all', (event, path) => {
+    //   // path = path * 1
+    //
+    //   // if(!isNaN(path))
+    //     console.log(event, path);
+    // })
+    // .on('error',
+		// 	error => debug_internals(`Watcher error: ${error}`)
+		// )
 
 		// this.proc_watcher = chokidar.watch('/proc/', {
 		// 	cwd: '/proc/',
@@ -297,6 +332,14 @@ module.exports = new Class({
     // }
     // catch(e){}
 
+
+    // // setInterval(function(){
+    //   fs.readdir('/proc/', function(err, files){
+    //     if(!err)
+    //       debug_internals(files)
+    //
+    //   })
+    // // }, 100)
 		this.log('os-procs', 'info', 'os-procs started');
   },
 

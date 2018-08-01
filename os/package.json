@@ -16,6 +16,7 @@
     "etc-passwd": "^0.1.1",
     "mootools": "^1.5.2",
     "node-watch": "^0.5.8",
+    "procfs-stats": "^1.0.2",
     "q": "^1.4.1",
     "uid-username": "0.0.2",
     "watchr": "^4.0.1"
