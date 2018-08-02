@@ -29,21 +29,40 @@ module.exports = new Class({
 
   /**
   * for some reason the array must be sorted alphabetically descending,
-  * or the proc {} won't have all the requested properties
+  * or the proc {} won't have all the requested stats
+  'statm',
+  'status',
+  'env',
+  'argv',
+  'threads',
+  'fds',
+  'cwd',
+  'io',
+  ->fd(fdPath,cb) not implemented yet
   **/
-  default_props: [
-    'stat',
-    'statm',
-    'status',
-    'env',
-    'argv',
-    'threads',
-    'fds',
-    'cwd',
-    'io',
-    //'tcp' doens't work (not a func)
-
-  ].sort().reverse(),
+  // _all_stats: [
+  //   'stat',
+  //   'statm',
+  //   'status',
+  //   'env',
+  //   'argv',
+  //   'threads',
+  //   'fds',
+  //   'cwd',
+  //   'io',
+  // ].sort().reverse(),
+  // default_stats: [
+  //   'stat',
+  // ].sort().reverse(),
+  default_stats: {
+    'stat': ['comm', 'state', 'ppid'],
+  },
+  /**
+  * not implemented:
+  * net && wifi (already on os module)
+  * disk (already on apps/os/blokdevices)
+  **/
+  // _static_stats:['tcp', 'udp', 'unix'],
 
   options: {
 
@@ -52,6 +71,7 @@ module.exports = new Class({
 
 		params: {
 			//prop: /fs|type|bloks|used|available|percentage|proc_point/
+
       pid: /^\d+$/
 		},
 
@@ -66,11 +86,11 @@ module.exports = new Class({
 						callbacks: ['get_proc'],
 						version: '',
 					},
-					{
-						path: ':pid/:prop',
-						callbacks: ['get_proc'],
-						version: '',
-					},
+					// {
+					// 	path: ':pid/:prop',
+					// 	callbacks: ['get_proc'],
+					// 	version: '',
+					// },
 					{
 						path: '',
 						callbacks: ['get'],
@@ -81,6 +101,39 @@ module.exports = new Class({
 
 		},
   },
+  _query_to_stats: function(query){
+    let stats = undefined
+    if(query){
+      let arr_stats = query.split(',')
+      stats = {}
+
+      Array.each(arr_stats, function(stat){
+        if(stat.indexOf('[') > -1){
+          let name = stat.substring(0, stat.indexOf('['))
+          let props = []
+          try{
+            console.log('parsing..', stat.substring(stat.indexOf('['), stat.length))
+            props = JSON.parse(stat.substring(stat.indexOf('['), stat.length))
+          }
+          catch(e){
+            console.log(e)
+          }
+
+          stats[name] = props
+
+          console.log(stats)
+        }
+        else{
+          stats[stat] = []
+        }
+
+
+      })
+    }
+
+
+    return stats
+  },
   get_proc: function (req, res, next){
     if(!procfs.works)
       res.status(500).json({error: "can't access proc fs"})
@@ -89,7 +142,7 @@ module.exports = new Class({
 		if(req.params.pid){
       let pid = req.params.pid
 
-      this._procs(pid, req.query.format)
+      this._procs(pid, this._query_to_stats(req.query.stats))
   		.then(procs => res.json(procs))
       .fail(err => res.status(500).json(err))
   		.done();
@@ -105,69 +158,130 @@ module.exports = new Class({
 		else{
 			res.status(500).json({error: 'bad proc param'});
 		}
+
+    // procfs.tcp(function(err, data){console.log(data)})
   },
   get: function (req, res, next){
 		if(!procfs.works)
       res.status(500).json({error: "can't access proc fs"})
 
-		this._procs(null, req.query.format)
+		this._procs(null, this._query_to_stats(req.query.stats))
 		.then(procs => res.json(procs))
     .fail(err => res.status(500).json(err))
 		.done();
 
+
   },
-  // // _prop: function(procs, pid, prop, cb){
-  _proc_props(pid, props){
-    props = (Array.isArray(props)) ? props : [props]
+  _proc_stats(pid, stats){
+    // stats = (Array.isArray(stats)) ? stats : [stats]
 
     let deferred = Q.defer()
 
     let proc = {}
-    Array.each(props, function(prop, index){
-      this._proc_prop(pid, prop).then(function(data){
-        proc[prop] = data
+    let counter = 0
+    // Array.each(this._all_stats, function(stat, index){
+    Object.each(stats, function(props, stat){
 
-        if(index == props.length - 1)
-          deferred.resolve(proc)
-      })
-      // .fail(err => deferred.reject(err))
-      .fail(function(err){
-        proc[prop] = err
+      console.log('stat', stat)
 
-        // if(index == props.length - 1)
-        //   deferred.resolve(proc)
-      })
-      .done()
+      // if(stats[stat]){
+      //   let props = stats[stat]
+
+        this._proc_stat(pid, stat).then(function(data){
+          // console.log(counter, data)
+
+          if(props && props.length > 0){
+            Object.each(props, function(prop){
+              if(data[prop]){
+                if(!proc[stat]) proc[stat] = {}
+
+                proc[stat][prop] = data[prop]
+              }
+            })
+          }
+          else{
+            proc[stat] = data
+          }
+
+          // console.log('resolving...', Object.getLength(stats))
+          if(counter == Object.getLength(stats) - 1){
+
+            deferred.resolve(proc)
+          }
+
+          counter++
+        })
+        // .fail(err => deferred.reject(err))
+        .fail(function(err){
+          proc[stat] = err
+
+          // if(index == stats.length - 1)
+          //   deferred.resolve(proc)
+
+          // console.log('resolving...', err)
+          if(counter == Object.getLength(stats) - 1){
+
+            deferred.resolve(proc)
+          }
+
+          counter++
+        })
+        .done()
+
+      // }
+
 
     }.bind(this))
 
     return deferred.promise
   },
-  _proc_prop: function(pid, prop){
+  _proc_stat: function(pid, stat){
     let deferred = Q.defer()
-    let ps = procfs(pid)
-    try{
-      ps[prop](function(err, data){
-        if(err){
-          deferred.reject(err)
-        }
-        else{
-          deferred.resolve(data)
-        }
-      })
-    }
-    catch(e){
-      console.log('err', prop, e)
-      // deferred.reject(e)
-      throw e
-    }
+    // if(this._static_stats.contains(stat)){
+    //   try{
+    //     procfs[stat](function(err, data){
+    //       // Array.each(data, function(val){
+    //       //
+    //       // })
+    //       if(err){
+    //         deferred.reject(err)
+    //       }
+    //       else{
+    //         deferred.resolve(data)
+    //       }
+    //     })
+    //   }
+    //   catch(e){
+    //     console.log('err', stat, e)
+    //     // deferred.reject(e)
+    //     throw e
+    //   }
+    // }
+    // else{
+      let ps = procfs(pid)
+      try{
+        ps[stat](function(err, data){
+          if(err){
+            deferred.reject(err)
+          }
+          else{
+            deferred.resolve(data)
+          }
+        })
+      }
+      catch(e){
+        console.log('err', stat, e)
+        // deferred.reject(e)
+        throw e
+      }
+    // }
 
     return deferred.promise
   },
-  _procs: function(pid, props){
-    props = props || this.default_props
+  _procs: function(pid, stats){
+    stats = stats || this.default_stats
 
-    props = (Array.isArray(props)) ? props : [props]
+    // stats = (Array.isArray(stats)) ? stats : [stats]
     let deferred = Q.defer()
 
     fs.readdir('/proc/', function(err, files){
@@ -188,7 +302,7 @@ module.exports = new Class({
             }
             else if(!pid){
               procs[proc_pid] = {}
-              // this._proc_props(proc_pid, props).then(function(data){
+              // this._proc_stats(proc_pid, stats).then(function(data){
               //   procs[proc_pid] = data
               //
               // }).done()
@@ -202,12 +316,12 @@ module.exports = new Class({
 
         let counter = 1
         Object.each(procs, function(proc, pid){
-          this._proc_props(pid, props)
+          this._proc_stats(pid, stats)
           .then(function(data){
             procs[pid] = data
 
 
-            console.log('counter...', counter, Object.getLength(procs))
+            // console.log('counter...', counter, Object.getLength(procs))
             if(counter == Object.getLength(procs))
               deferred.resolve(procs)
 
