@@ -1,3 +1,28 @@
+/**
+* https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat
+* https://www.npmjs.com/package/sysconf
+uid,ppid,etimes,cputime,pcpu,pmem,stat,command,lstart
+
+"uid",
+"ppid",
+cputime =utime+stime+cutime+cstime
+stat=state
+"comm"
+"starttime"
+
+https://github.com/sonnyp/proctor/blob/master/index.js
+
+var CLK_TCK = (function () {
+  try {
+    return +execSync('getconf CLK_TCK', {encoding: 'utf8'})
+  } catch (e) {
+    return NaN
+  }
+}())
+
+* http://linuxcommand.org/lc3_man_pages/ps1.html
+* https://www.redhat.com/archives/axp-list/2001-January/msg00355.html
+**/
 'use strict'
 
 var debug = require('debug')('api:apps:os:procs');
@@ -55,7 +80,7 @@ module.exports = new Class({
   //   'stat',
   // ].sort().reverse(),
   default_stats: {
-    'stat': ['pid'],
+    'stat': [],
   },
   /**
   * not implemented:
