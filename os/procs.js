@@ -1,28 +1,3 @@
-/**
-* https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat
-* https://www.npmjs.com/package/sysconf
-uid,ppid,etimes,cputime,pcpu,pmem,stat,command,lstart
-
-"uid",
-"ppid",
-cputime =utime+stime+cutime+cstime
-stat=state
-"comm"
-"starttime"
-
-https://github.com/sonnyp/proctor/blob/master/index.js
-
-var CLK_TCK = (function () {
-  try {
-    return +execSync('getconf CLK_TCK', {encoding: 'utf8'})
-  } catch (e) {
-    return NaN
-  }
-}())
-
-* http://linuxcommand.org/lc3_man_pages/ps1.html
-* https://www.redhat.com/archives/axp-list/2001-January/msg00355.html
-**/
 'use strict'
 
 var debug = require('debug')('api:apps:os:procs');
@@ -137,7 +112,9 @@ module.exports = new Class({
     if(query && Object.getLength(query) > 0){
       stats = {}
       Object.each(query, function(props, stat){
-        //console.log(props, stat)
+
+        // console.log(props, stat)
+
         if(props){
           stats[stat] = JSON.parse(props)
         }
@@ -199,25 +176,25 @@ module.exports = new Class({
     // Array.each(this._all_stats, function(stat, index){
     Object.each(stats, function(props, stat){
 
-      //console.log('stat', stat)
+      // console.log('stat', stat)
 
       // if(stats[stat]){
       //   let props = stats[stat]
 
         this._proc_stat(pid, stat).then(function(data){
-          // //console.log(counter, data)
+          // console.log(counter, data)
 
           if(props && props.length > 0){
             Object.each(props, function(prop){
               if(data[prop]){
                 if(!proc[stat]) proc[stat] = {}
 
-                proc[stat][prop] = data[prop]
+                proc[stat][prop] = (isNaN(data[prop] * 1)) ? data[prop] : data[prop] * 1
               }
             })
           }
           else{
-            proc[stat] = data
+            proc[stat] = (isNaN(data * 1)) ? data : data * 1
           }
 
           // //console.log('resolving...', Object.getLength(stats))
