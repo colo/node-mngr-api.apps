@@ -17,7 +17,6 @@
     "mootools": "^1.5.2",
     "procfs-stats": "^1.0.2",
     "q": "^1.4.1",
-    "readdir-enhanced": "^2.2.1",
     "uid-username": "0.0.2"
   },
   "devDependencies": {},

@@ -6,7 +6,6 @@ var debug_internals = require('debug')('api:apps:os:procs:Internals')
 var fs = require('fs')
 var procfs = require('procfs-stats'),
     Q = require('q'),
-    readdir = require('readdir-enhanced'),
     async = require("async");
 
 // var path = require('path'),
@@ -183,6 +182,7 @@ module.exports = new Class({
         let ps = procfs(pid)
         try{
           ps[stat]((err, data) => callback(err, data))
+          // callback(null, {})
         }
         catch(e){
           throw e
@@ -243,7 +243,7 @@ module.exports = new Class({
       // // deferred.resolve(result)
       //
       // // console.log('---')
-      console.log(stats)
+      // console.log(stats)
       Object.each(stats, function(props, stat){
         if(props && props.length > 0){
           // console.log(props)
@@ -261,79 +261,57 @@ module.exports = new Class({
           // result[stat] = (isNaN(data[stat] * 1)) ? data[stat] : data[stat] * 1
         }
       })
-      // // return result
-      // // let stat = {}
-      // if(props && props.length > 0){
-      // // //   Object.each(props, function(prop){
-      // // //     if(data[prop]){
-      // // //       // if(!proc[stat]) proc[stat] = {}
-      // // //
-      // // //       stat[prop] = (isNaN(data[prop] * 1)) ? data[prop] : data[prop] * 1
-      // // //     }
-      // // //   })
-      // }
-      // else{
-      // //   // proc[stat] = (isNaN(data * 1)) ? data : data * 1
-      // //   stat = data
-      //   value[stat] = data
-      // }
-      //
-      // console.log(value)
-      // // //console.log('resolving...', Object.getLength(stats))
-      // // if(counter == Object.getLength(stats) - 1){
 
         deferred.resolve(result)
-      // }
 
-      // counter++
     });
 
     return deferred.promise
   },
-  _proc_stat: function(pid, stat){
-    let deferred = Q.defer()
-    // if(this._static_stats.contains(stat)){
-    //   try{
-    //     procfs[stat](function(err, data){
-    //       // Array.each(data, function(val){
-    //       //
-    //       // })
-    //       if(err){
-    //         deferred.reject(err)
-    //       }
-    //       else{
-    //         deferred.resolve(data)
-    //       }
-    //     })
-    //   }
-    //   catch(e){
-    //     //console.log('err', stat, e)
-    //     // deferred.reject(e)
-    //     throw e
-    //   }
-    // }
-    // else{
-      let ps = procfs(pid)
-      try{
-        ps[stat](function(err, data){
-          if(err){
-            deferred.reject(err)
-          }
-          else{
-            deferred.resolve(data)
-          }
-        })
-        // deferred.resolve({})
-      }
-      catch(e){
-        //console.log('err', stat, e)
-        // deferred.reject(e)
-        throw e
-      }
-    // }
-
-    return deferred.promise
-  },
+  // _proc_stat: function(pid, stat){
+  //   let deferred = Q.defer()
+  //   // if(this._static_stats.contains(stat)){
+  //   //   try{
+  //   //     procfs[stat](function(err, data){
+  //   //       // Array.each(data, function(val){
+  //   //       //
+  //   //       // })
+  //   //       if(err){
+  //   //         deferred.reject(err)
+  //   //       }
+  //   //       else{
+  //   //         deferred.resolve(data)
+  //   //       }
+  //   //     })
+  //   //   }
+  //   //   catch(e){
+  //   //     //console.log('err', stat, e)
+  //   //     // deferred.reject(e)
+  //   //     throw e
+  //   //   }
+  //   // }
+  //   // else{
+  //     let ps = procfs(pid)
+  //     try{
+  //       ps[stat](function(err, data){
+  //         if(err){
+  //           deferred.reject(err)
+  //         }
+  //         else{
+  //           deferred.resolve(data)
+  //         }
+  //       })
+  //       // deferred.resolve({})
+  //     }
+  //     catch(e){
+  //       //console.log('err', stat, e)
+  //       // deferred.reject(e)
+  //       throw e
+  //     }
+  //   // }
+  //
+  //   return deferred.promise
+  // },
   _procs: function(pid, stats){
     stats = stats || this.default_stats
 
@@ -342,8 +320,8 @@ module.exports = new Class({
     // stats = (Array.isArray(stats)) ? stats : [stats]
     let deferred = Q.defer()
 
-    // fs.readdir('/proc/', function(err, files){
-    readdir.async('/proc/', {filter: /\d+/}, function(err, files){
+    fs.readdir('/proc/', function(err, files){
+    // readdir.async('/proc/', {filter: /\d+/}, function(err, files){
 
       if(err){
         deferred.reject(err)
@@ -351,51 +329,102 @@ module.exports = new Class({
       else{
         let procs = {}
 
-        Array.each(files, function(file, index){
+        let proc_task = function(callback) {
+          try{
+            // ps[stat]((err, data) => callback(err, data))
+            this._proc_stats(pid, stats).then(function(data){
+              callback(null, data)
+            })
+            .fail(err => callback(err, null))
+            .done()
+          }
+          catch(e){
+            throw e
+          }
+        }.bind(this)
+
+        // Array.each(files, function(file, index){
+        for(let index = 0; index < files.length -1; index++){
+          let file = files[index]
           let proc_pid = file * 1//type cast
           if(!isNaN(proc_pid)){
 
-            if(pid && proc_pid == pid){
-              procs[pid] = {}
+            // if(pid && proc_pid == pid){
+            //   procs[pid] = {}
+            //
+            // }
+            // else if(!pid){
+            //   procs[proc_pid] = {}
+            // }
+            if(!pid || (pid && proc_pid == pid)){
+              // console.log(proc_pid)
+              procs[proc_pid] = function(callback) {
+                try{
+                  // ps[stat]((err, data) => callback(err, data))
+                  this._proc_stats(proc_pid, stats).then(function(data){
+                    callback(null, data)
+                  })
+                  .fail(err => callback(err, null))
+                  .done()
+                }
+                catch(e){
+                  throw e
+                }
+              }.bind(this)
+            }
 
-            }
-            else if(!pid){
-              procs[proc_pid] = {}
-              // this._proc_stats(proc_pid, stats).then(function(data){
-              //   procs[proc_pid] = data
-              //
-              // }).done()
-            }
           }
 
           // if(index == files.length -1)
 
+        }
+        // }.bind(this))
 
-        }.bind(this))
+        // // let counter = 1
+        // Object.each(procs, function(proc, pid){
+        //   procs[pid] = function(callback) {
+        //     try{
+        //       // ps[stat]((err, data) => callback(err, data))
+        //       this._proc_stats(pid, stats).then(function(data){
+        //         callback(null, data)
+        //       })
+        //       .fail(err => callback(err, null))
+        //       .done()
+        //     }
+        //     catch(e){
+        //       throw e
+        //     }
+        //   }.bind(this)
+        //
+        // //   this._proc_stats(pid, stats)
+        // //   .then(function(data){
+        // //     procs[pid] = data
+        // //
+        // //
+        // //     // //console.log('counter...', counter, Object.getLength(procs))
+        // //     if(counter == Object.getLength(procs))
+        // //       deferred.resolve(procs)
+        // //
+        // //     counter++
+        // //   })
+        // //   .fail(err => deferred.reject(err))
+        // //   .done()
+        // //
+        // //
+        // }.bind(this))
 
-        let counter = 1
-        Object.each(procs, function(proc, pid){
-          this._proc_stats(pid, stats)
-          .then(function(data){
-            procs[pid] = data
+        async.parallel(procs, function(err, data) {
 
+          if(err){
+            deferred.reject(err)
+          }
+          else{
+            deferred.resolve(data)
+          }
 
-            // //console.log('counter...', counter, Object.getLength(procs))
-            if(counter == Object.getLength(procs))
-              deferred.resolve(procs)
-
-            counter++
-          })
-          .fail(err => deferred.reject(err))
-          .done()
-
-
-        }.bind(this))
-
+        });
       }
-        // debug_internals(files)
 
-      // cb(procs)
     }.bind(this))
 
     return deferred.promise

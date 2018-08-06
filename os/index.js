@@ -6,50 +6,50 @@ var path = require('path'),
 		exec = require('child_process').exec,
 		Q = require('q'),
 		debug = require('debug')('os');
-	
-	
+
+
 const App =  process.env.NODE_ENV === 'production'
       ? require('./config/prod.conf')
       : require('./config/dev.conf');
-      
+
 module.exports = new Class({
   Extends: App,
-  
+
 
   get: function (req, res, next){
 		this._networkInterfaces()
 		.then(function(ifaces){
-			
+
 			var json = {};
 			Object.each(os, function(item, key){
 
 				if(key != 'getNetworkInterfaces' && key != 'networkInterfaces')//deprecated func && use internal func
 					json[key] = (typeof(item) == 'function') ? os[key]() : os[key];
-				
+
 				if(key == 'networkInterfaces'){
 					json[key] = ifaces;
 				}
-				
+
 			}.bind(this));
-			
+
 			res.json(json);
 		})
 		.done();
-		
-	  
+
+
   },
   initialize: function(options){
-		
+
 		//dynamically create routes based on OS module (ex: /os/hostname|/os/cpus|...)
 		Object.each(os, function(item, key){
 			if(key != 'getNetworkInterfaces'){//deprecated func
 				var callbacks = [];
-			
+
 				if(key == 'networkInterfaces'){//use internal func
 					this[key] = function(req, res, next){
 						//console.log('params');
 						//console.log(req.params);
-						
+
 						this._networkInterfaces()
 						.then(function(result){
 							////console.log('ifaces');
@@ -63,7 +63,7 @@ module.exports = new Class({
 							else{
 								res.json(result);
 							}
-							
+
 						})
 						.done();
 					}
@@ -72,9 +72,9 @@ module.exports = new Class({
 					this[key] = function(req, res, next){
 						////console.log('params');
 						////console.log(req.params);
-						
+
 						var result = (typeof(item) == 'function') ? os[key]() : os[key];
-						
+
 						if(req.params.prop && result[req.params.prop]){
 							res.json(result[req.params.prop]);
 						}
@@ -86,40 +86,40 @@ module.exports = new Class({
 						}
 					}
 				}
-				
+
 				this.options.api.routes.all.push({
 						path: key,
 						callbacks: [key]
 				});
-				
+
 				this.options.api.routes.all.push({
 						path: key+'/:prop',
 						callbacks: [key]
 				});
 			}
 		}.bind(this));
-			
+
 		this.parent(options);//override default options
-		
+
 		this.log('os', 'info', 'os started');
   },
   _networkInterfaces: function(){
 		var deferred = Q.defer();
 		var ifaces = os.networkInterfaces();
-		
+
 		//console.log(ifaces);
-		
+
 		var child = exec(
 			'cat /proc/net/dev',
 			function (err, stdout, stderr) {
-				
+
 				if (err) deferred.reject(err);
-				
+
 				var data = stdout.split('\n');
 
 				data.splice(0, 2);
 				data.splice(-1, 1);
-				
+
 				data.each(function(item, index){
 					//console.log('iface item '+item);
 					//if(index != 0 && index != data.length -1 ){
@@ -128,10 +128,10 @@ module.exports = new Class({
 						tmp[0] = tmp[0].replace(':', ''); //removes : from iface name
 						var name = tmp[0];
 						//console.log(tmp);
-						
+
 						if(ifaces[name]){
 							var tmp_data = ifaces[name];
-							
+
 							ifaces[name] = {
 								'if' : tmp_data,
 								'recived' : {
@@ -155,19 +155,18 @@ module.exports = new Class({
 									compressed : tmp[16]
 								}
 							};
-							
-							
-							
+
+
+
 						}
 				}.bind(this));
-				
+
 				deferred.resolve(ifaces);
 			}.bind(this)
 		);
-		
-	
-    return deferred.promise;  
-  },
-	
-});
 
+
+    return deferred.promise;
+  },
+
+});

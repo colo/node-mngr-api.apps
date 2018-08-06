@@ -3,7 +3,7 @@
 var path = require('path'),
 		exec = require('child_process').exec,
 		Q = require('q');
-	
+
 const App =  process.env.NODE_ENV === 'production'
       ? require('./config/prod.conf')
       : require('./config/dev.conf');
@@ -11,23 +11,23 @@ const App =  process.env.NODE_ENV === 'production'
 
 module.exports = new Class({
   Extends: App,
-  
+
   command: "df -akT",
   mounts: [],
-  
+
   options: {
-	  
+
 		id: 'mounts',
 		path: '/os/mounts',
-		
+
 		params: {
 			prop: /fs|type|bloks|used|available|percentage|mount_point/
 		},
-		
+
 		api: {
-			
+
 			version: '1.0.0',
-			
+
 			routes: {
 				get: [
 					{
@@ -47,7 +47,7 @@ module.exports = new Class({
 					},
 				]
 			},
-			
+
 		},
   },
   /**
@@ -57,25 +57,25 @@ module.exports = new Class({
   get_mount: function (req, res, next){
 		//console.log('mounts param:');
 		//console.log(req.params);
-		
+
 		if(req.params.mount){
 			this._mounts(req.params.mount)
 			.then(function(result){
 				////console.log(result);
 				if(!(typeof(req.params.prop) == 'undefined')){
-					
+
 					if(result[req.params.prop]){
 						res.json(result[req.params.prop]);
 					}
 					else{
 						res.status(500).json({error: 'bad mount property'});
 					}
-					
+
 				}
 				else{
 					res.json(result);
 				}
-				
+
 			}, function (error) {
 				////console.log('error');
 				////console.log(error);
@@ -93,11 +93,11 @@ module.exports = new Class({
 			res.json(result);
 		})
 		.done();
-		
+
   },
   _mounts: function(mount){
 		var deferred = Q.defer();
-		
+
 		if(mount){//if mount param
 			if(this.mounts.length == 0){//if mounts[] empty, call without params
 				this._mounts()
@@ -114,20 +114,20 @@ module.exports = new Class({
 						deferred.resolve(item);
 					}
 				});
-				
+
 				deferred.reject(new Error('Mount not found'));
 			}
-			
-			
+
+
 		}
 		else{
 			this.mounts = [];
 			var child = exec(
 				this.command,
 				function (err, stdout, stderr) {
-					
+
 					if (err) deferred.reject(err);
-					
+
 					var data = stdout.split('\n');
 
 					//drives.splice(0, 1);
@@ -148,20 +148,19 @@ module.exports = new Class({
 							})
 						}
 					}.bind(this));
-					
+
 					deferred.resolve(this.mounts);
 				}.bind(this)
 			);
 		}
-	
-    return deferred.promise;  
+
+    return deferred.promise;
   },
   initialize: function(options){
-	
+
 		this.parent(options);//override default options
-		
+
 		this.log('os-mounts', 'info', 'os-mounts started');
   },
-	
-});
 
+});
