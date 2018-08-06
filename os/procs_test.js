@@ -5,7 +5,9 @@ var debug_internals = require('debug')('api:apps:os:procs:Internals')
 
 var fs = require('fs')
 var procfs = require('procfs-stats'),
-    Q = require('q');
+    Q = require('q'),
+    readdir = require('readdir-enhanced'),
+    async = require("async");
 
 // var path = require('path'),
 // 		exec = require('child_process').exec,
@@ -172,60 +174,119 @@ module.exports = new Class({
     let deferred = Q.defer()
 
     let proc = {}
-    let counter = 0
+    // let counter = 0
     // Array.each(this._all_stats, function(stat, index){
+    // let tasks = {}
     Object.each(stats, function(props, stat){
 
-      //console.log('stat', stat)
+      proc[stat] = function(callback) {
+        let ps = procfs(pid)
+        try{
+          ps[stat]((err, data) => callback(err, data))
+        }
+        catch(e){
+          throw e
+        }
+      }
 
-      // if(stats[stat]){
-      //   let props = stats[stat]
-
-        this._proc_stat(pid, stat).then(function(data){
-          // //console.log(counter, data)
-
-          if(props && props.length > 0){
-            Object.each(props, function(prop){
-              if(data[prop]){
-                if(!proc[stat]) proc[stat] = {}
-
-                proc[stat][prop] = (isNaN(data[prop] * 1)) ? data[prop] : data[prop] * 1
-              }
-            })
-          }
-          else{
-            proc[stat] = (isNaN(data * 1)) ? data : data * 1
-          }
-
-          // //console.log('resolving...', Object.getLength(stats))
-          if(counter == Object.getLength(stats) - 1){
-
-            deferred.resolve(proc)
-          }
-
-          counter++
-        })
-        // .fail(err => deferred.reject(err))
-        .fail(function(err){
-          proc[stat] = err
-
-          // if(index == stats.length - 1)
-          //   deferred.resolve(proc)
-
-          // //console.log('resolving...', err)
-          if(counter == Object.getLength(stats) - 1){
-
-            deferred.resolve(proc)
-          }
-
-          counter++
-        })
-        .done()
+      // this._proc_stat(pid, stat).then(function(data){
+      //   // console.log(counter, data)
+      //
+      //   if(props && props.length > 0){
+      //     Object.each(props, function(prop){
+      //       if(data[prop]){
+      //         if(!proc[stat]) proc[stat] = {}
+      //
+      //         proc[stat][prop] = (isNaN(data[prop] * 1)) ? data[prop] : data[prop] * 1
+      //       }
+      //     })
+      //   }
+      //   else{
+      //     proc[stat] = (isNaN(data * 1)) ? data : data * 1
+      //   }
+      //
+      //   // //console.log('resolving...', Object.getLength(stats))
+      //   if(counter == Object.getLength(stats) - 1){
+      //
+      //     deferred.resolve(proc)
+      //   }
+      //
+      //   counter++
+      // })
+      // // .fail(err => deferred.reject(err))
+      // .fail(function(err){
+      //   proc[stat] = err
+      //
+      //   // if(index == stats.length - 1)
+      //   //   deferred.resolve(proc)
+      //
+      //   // //console.log('resolving...', err)
+      //   if(counter == Object.getLength(stats) - 1){
+      //
+      //     deferred.resolve(proc)
+      //   }
+      //
+      //   counter++
+      // })
+      // .done()
 
       // }
 
 
     }.bind(this))
+
+    async.parallel(proc, function(err, data) {//result [props, data]
+      let stat = Object.keys(data)
+      let value = {}
+      let props = stats[stat]
+      let result = {}
+      // // deferred.resolve(result)
+      //
+      // // console.log('---')
+      console.log(stats)
+      Object.each(stats, function(props, stat){
+        if(props && props.length > 0){
+          // console.log(props)
+          Array.each(props, function(prop){
+            if(data[stat] && data[stat][prop]){
+              if(!result[stat]) result[stat] = {}
+
+              result[stat][prop] = (isNaN(data[stat][prop] * 1)) ? data[stat][prop] : data[stat][prop] * 1
+            }
+
+          })
+        }
+        else{
+          result[stat] = data[stat]
+          // result[stat] = (isNaN(data[stat] * 1)) ? data[stat] : data[stat] * 1
+        }
+      })
+      // // return result
+      // // let stat = {}
+      // if(props && props.length > 0){
+      // // //   Object.each(props, function(prop){
+      // // //     if(data[prop]){
+      // // //       // if(!proc[stat]) proc[stat] = {}
+      // // //
+      // // //       stat[prop] = (isNaN(data[prop] * 1)) ? data[prop] : data[prop] * 1
+      // // //     }
+      // // //   })
+      // }
+      // else{
+      // //   // proc[stat] = (isNaN(data * 1)) ? data : data * 1
+      // //   stat = data
+      //   value[stat] = data
+      // }
+      //
+      // console.log(value)
+      // // //console.log('resolving...', Object.getLength(stats))
+      // // if(counter == Object.getLength(stats) - 1){
+
+        deferred.resolve(result)
+      // }
+
+      // counter++
+    });
 
     return deferred.promise
   },
@@ -262,6 +323,7 @@ module.exports = new Class({
             deferred.resolve(data)
           }
         })
+        // deferred.resolve({})
       }
       catch(e){
         //console.log('err', stat, e)
@@ -280,7 +342,8 @@ module.exports = new Class({
     // stats = (Array.isArray(stats)) ? stats : [stats]
     let deferred = Q.defer()
 
-    fs.readdir('/proc/', function(err, files){
+    // fs.readdir('/proc/', function(err, files){
+    readdir.async('/proc/', {filter: /\d+/}, function(err, files){
 
       if(err){
         deferred.reject(err)
