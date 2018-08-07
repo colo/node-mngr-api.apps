@@ -101,11 +101,20 @@ module.exports = new Class({
 
 		var command = this.command;
 		if(format){
-			var cond = new RegExp('args|command|comm');
+			let ucmd = new RegExp('ucmd|ucomm');
 
-			if(cond.test(format)){//command (comm, args alias) should be at the end as may have spaces in the column
-				format = format.replace(cond, '');
-				format += ',args';
+			if(ucmd.test(format)){//ucmd (ucomm alias) should be at the end as may have spaces in the column
+				format = format.replace(ucmd, '');
+				format += ',ucmd';
+				format = format.replace(',,', ',');
+			}
+
+			var args = new RegExp('args|command|comm');
+
+			if(args.test(format)){//command (comm | args alias) should be at the end as may have spaces in the column
+				format = format.replace(args, '');
+				// format += ',args';
+				format += ' -o "|%a"';
 				format = format.replace(',,', ',');
 			}
 
@@ -116,7 +125,7 @@ module.exports = new Class({
 		}
 
 		//console.log('full command');
-		//console.log(command);
+		// console.log(command);
 
 		var procs = {}
 		var child = exec(
@@ -131,20 +140,29 @@ module.exports = new Class({
 				var proc = {};
 				var saved_proc = null;
 				try{//just to break the "each" if proc is found
-					data.each(function(item, index){
-						////console.log('item');
-						////console.log(item);
-						////console.log(item.clean());
-						////console.log(item.split());
+					data.each(function(line, index){
+						// console.log('Line:', line);
+						// console.log(line);
+						////console.log(line.clean());
+						////console.log(line.split());
 						//if(index != 0 && index != data.length -1 ){
 						if(index != data.length -1 ){
-							console.log(item)
-							var tmp = item.clean().split(' ');
+							// console.log(line)
+							let tmp_line = line.clean().split('|')
+							line = tmp_line[0]
+							let command = tmp_line[1]
+
+							// console.log('Line:', line)
+							// console.log('Comm', command)
+
+							var tmp = line.clean().split(' ');
 
 							if(index == 0){//use first line columns names as object keys
 								tmp.each(function(column){
 									proc[column.toLowerCase()] = null;
 								});
+								if(command)
+									proc['command'] = null;
 							}
 							else{
 								var i = 0;
@@ -155,17 +173,23 @@ module.exports = new Class({
 									if(column != 'command' && column != 'cmd'){//exclude command column
 										proc[column] = tmp[i];
 									}
+									else if(column == 'command'){
+										proc[column] = command.split(' ')
+									}
 									else{//as may be split in morearray items
-										proc[column] = [];
+										proc[column] = '';
 
 										for(var j = i; j < tmp.length; j++){
-											proc[column].push(tmp[j]);
+											// proc[column].push(tmp[j]);
+											proc[column] += tmp[j]+' '
 										}
+
+										proc[column] = proc[column].clean()
 									}
 
 									i++;
 								});
-								////console.log(item.clean().split(' '));
+								////console.log(line.clean().split(' '));
 
 								if(pid && proc['pid'] == pid){
 									saved_proc = Object.clone(proc);
