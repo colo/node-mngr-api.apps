@@ -198,7 +198,8 @@ module.exports = new Class({
 								}
 
 								// procs.push(Object.clone(proc));
-								procs[proc.pid] = Object.clone(proc)
+								// procs[proc.pid] = Object.clone(proc)
+								procs[proc.pid] = proc
 							}
 
 						}
