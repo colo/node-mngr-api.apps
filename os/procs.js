@@ -20,6 +20,8 @@ module.exports = new Class({
 		id: 'procs',
 		path: '/os/procs',
 
+		logs: undefined,
+
 		params: {
 			//prop: /fs|type|bloks|used|available|percentage|proc_point/
 		},
@@ -198,8 +200,8 @@ module.exports = new Class({
 								}
 
 								// procs.push(Object.clone(proc));
-								// procs[proc.pid] = Object.clone(proc)
-								procs[proc.pid] = proc
+								procs[proc.pid] = Object.clone(proc)
+
 							}
 
 						}

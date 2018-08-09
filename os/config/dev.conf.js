@@ -5,10 +5,11 @@ const Moo = require("mootools"),
 
 module.exports = new Class({
   Extends: BaseApp,
-  
+
   options: {
-		
+
+		logs: undefined,
 		
 	},
-	
+
 });
