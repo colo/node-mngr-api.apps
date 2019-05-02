@@ -1,7 +1,7 @@
 'use strict'
 
 
-var path = require('path'),
+const path = require('path'),
 		os = require('os'),
 		exec = require('child_process').exec,
 		Q = require('q'),
@@ -20,7 +20,7 @@ module.exports = new Class({
 		this._networkInterfaces()
 		.then(function(ifaces){
 
-			var json = {};
+			let json = {};
 			Object.each(os, function(item, key){
 
 				if(key != 'getNetworkInterfaces' && key != 'networkInterfaces')//deprecated func && use internal func
@@ -43,7 +43,7 @@ module.exports = new Class({
 		//dynamically create routes based on OS module (ex: /os/hostname|/os/cpus|...)
 		Object.each(os, function(item, key){
 			if(key != 'getNetworkInterfaces'){//deprecated func
-				var callbacks = [];
+				let callbacks = [];
 
 				if(key == 'networkInterfaces'){//use internal func
 					this[key] = function(req, res, next){
@@ -73,7 +73,7 @@ module.exports = new Class({
 						////console.log('params');
 						////console.log(req.params);
 
-						var result = (typeof(item) == 'function') ? os[key]() : os[key];
+						let result = (typeof(item) == 'function') ? os[key]() : os[key];
 
 						if(req.params.prop && result[req.params.prop]){
 							res.json(result[req.params.prop]);
@@ -104,18 +104,18 @@ module.exports = new Class({
 		this.log('os', 'info', 'os started');
   },
   _networkInterfaces: function(){
-		var deferred = Q.defer();
-		var ifaces = os.networkInterfaces();
+		let deferred = Q.defer();
+		let ifaces = os.networkInterfaces();
 
 		//console.log(ifaces);
 
-		var child = exec(
+		let child = exec(
 			'cat /proc/net/dev',
 			function (err, stdout, stderr) {
 
 				if (err) deferred.reject(err);
 
-				var data = stdout.split('\n');
+				let data = stdout.split('\n');
 
 				data.splice(0, 2);
 				data.splice(-1, 1);
@@ -124,13 +124,13 @@ module.exports = new Class({
 					//console.log('iface item '+item);
 					//if(index != 0 && index != data.length -1 ){
 						////console.log(item.clean().split(' '));
-						var tmp = item.clean().split(' ');
+						let tmp = item.clean().split(' ');
 						tmp[0] = tmp[0].replace(':', ''); //removes : from iface name
-						var name = tmp[0];
+						let name = tmp[0];
 						//console.log(tmp);
 
 						if(ifaces[name]){
-							var tmp_data = ifaces[name];
+							let tmp_data = ifaces[name];
 
 							ifaces[name] = {
 								'if' : tmp_data,

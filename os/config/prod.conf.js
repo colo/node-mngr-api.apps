@@ -11,7 +11,7 @@ module.exports = new Class({
 		logs: {
 			path: './logs'
 		},
-		
+
 		authorization: {
 			config: {
 				"permissions":[],
@@ -25,20 +25,20 @@ module.exports = new Class({
 			/**
 			 * add 'check_authentication' & 'check_authorization' to each route
 			 * */
-			Object.each(this.options.api.routes, function(routes, verb){
-
-				if(verb != 'all'){
-					Array.each(routes, function(route){
-						//debug('route: ' + verb);
-						route.callbacks.unshift('check_authorization');
-						route.callbacks.unshift('check_authentication');
-
-						if(verb == 'get' && !route.roles)//users can "read" info
-							route.roles = ['user']
-					});
-				}
-
-			});
+			// Object.each(this.options.api.routes, function(routes, verb){
+      //
+			// 	if(verb != 'all'){
+			// 		Array.each(routes, function(route){
+			// 			//debug('route: ' + verb);
+			// 			route.callbacks.unshift('check_authorization');
+			// 			route.callbacks.unshift('check_authentication');
+      //
+			// 			if(verb == 'get' && !route.roles)//users can "read" info
+			// 				route.roles = ['user']
+			// 		});
+			// 	}
+      //
+			// });
 		}
 
 

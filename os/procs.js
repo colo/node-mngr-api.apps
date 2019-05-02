@@ -1,7 +1,7 @@
 'use strict'
 
-var path = require('path'),
-		exec = require('child_process').exec,
+const path = require('path'),
+		// exec = require('child_process').exec,
 		spawn = require('child_process').spawn,
 		Q = require('q');
 
@@ -12,6 +12,9 @@ const App =  process.env.NODE_ENV === 'production'
 
 module.exports = new Class({
   Extends: App,
+
+	UCMD: new RegExp('ucmd|ucomm'),
+	ARGS: new RegExp('args|command|comm'),
 
   //procs: [],
   // command: "ps -eo pid",
@@ -101,23 +104,23 @@ module.exports = new Class({
 
   },
   _procs: function(pid, format){
-		var deferred = Q.defer();
+		let deferred = Q.defer();
 
-		// var command = this.command;
+		// let command = this.command;
 		let command = ''
 		if(format){
-			let ucmd = new RegExp('ucmd|ucomm');
+			// let ucmd = new RegExp('ucmd|ucomm');
 
-			if(ucmd.test(format)){//ucmd (ucomm alias) should be at the end as may have spaces in the column
-				format = format.replace(ucmd, '');
+			if(this.UCMD.test(format)){//ucmd (ucomm alias) should be at the end as may have spaces in the column
+				format = format.replace(this.UCMD, '');
 				format += ',ucmd';
 				format = format.replace(',,', ',');
 			}
 
-			var args = new RegExp('args|command|comm');
+			// let args = new RegExp('args|command|comm');
 
-			if(args.test(format)){//command (comm | args alias) should be at the end as may have spaces in the column
-				format = format.replace(args, '');
+			if(this.ARGS.test(format)){//command (comm | args alias) should be at the end as may have spaces in the column
+				format = format.replace(this.ARGS, '');
 				// format += ',args';
 				// format += ' -o "|%a"'; //with exec
 				format += ' -o |%a';//spawn
@@ -136,18 +139,18 @@ module.exports = new Class({
 		//console.log('full command');
 		// console.log(command);
 
-		var procs = {}
-		// var child = exec(
+		let procs = {}
+		// let child = exec(
 		// 	command,
 		// 	function (err, stdout, stderr) {
     //
 		// 		if (err) deferred.reject(err);
     //
-		// 		var data = stdout.split('\n');
+		// 		let data = stdout.split('\n');
     //
     //
-		// 		var proc = {};
-		// 		var saved_proc = null;
+		// 		let proc = {};
+		// 		let saved_proc = null;
 		// 		try{//just to break the "each" if proc is found
 		// 			data.each(function(line, index){
 		// 				// console.log('Line:', line);
@@ -164,7 +167,7 @@ module.exports = new Class({
 		// 					// console.log('Line:', line)
 		// 					// console.log('Comm', command)
     //
-		// 					var tmp = line.clean().split(' ');
+		// 					let tmp = line.clean().split(' ');
     //
 		// 					if(index == 0){//use first line columns names as object keys
 		// 						tmp.each(function(column){
@@ -174,7 +177,7 @@ module.exports = new Class({
 		// 							proc['command'] = null;
 		// 					}
 		// 					else{
-		// 						var i = 0;
+		// 						let i = 0;
 		// 						Object.each(proc, function(value, column){
 		// 							////console.log(column);
 		// 							////console.log(tmp[i]);
@@ -188,7 +191,7 @@ module.exports = new Class({
 		// 							else{//as may be split in morearray items
 		// 								proc[column] = '';
     //
-		// 								for(var j = i; j < tmp.length; j++){
+		// 								for(let j = i; j < tmp.length; j++){
 		// 									// proc[column].push(tmp[j]);
 		// 									proc[column] += tmp[j]+' '
 		// 								}
@@ -258,11 +261,11 @@ module.exports = new Class({
 		  // console.log(`child process exited with code ${code}`);
 			// console.log(ps_data)
 
-			var data = ps_data.split('\n');
+			let data = ps_data.split('\n');
 
 
-			var proc = {};
-			var saved_proc = null;
+			let proc = {};
+			let saved_proc = null;
 			try{//just to break the "each" if proc is found
 				data.each(function(line, index){
 					// console.log('Line:', line);
@@ -279,7 +282,7 @@ module.exports = new Class({
 						// console.log('Line:', line)
 						// console.log('Comm', command)
 
-						var tmp = line.clean().split(' ');
+						let tmp = line.clean().split(' ');
 
 						if(index == 0){//use first line columns names as object keys
 							tmp.each(function(column){
@@ -289,7 +292,7 @@ module.exports = new Class({
 								proc['command'] = null;
 						}
 						else{
-							var i = 0;
+							let i = 0;
 							Object.each(proc, function(value, column){
 								////console.log(column);
 								////console.log(tmp[i]);
@@ -303,7 +306,7 @@ module.exports = new Class({
 								else{//as may be split in morearray items
 									proc[column] = '';
 
-									for(var j = i; j < tmp.length; j++){
+									for(let j = i; j < tmp.length; j++){
 										// proc[column].push(tmp[j]);
 										proc[column] += tmp[j]+' '
 									}

@@ -1,8 +1,8 @@
 'use strict'
 
-var path = require('path'),
+const path = require('path'),
 		passwd = require('etc-passwd');
-	
+
 const App =  process.env.NODE_ENV === 'production'
       ? require('./config/prod.conf')
       : require('./config/dev.conf');
@@ -10,22 +10,22 @@ const App =  process.env.NODE_ENV === 'production'
 
 module.exports = new Class({
   Extends: App,
-  
-  
+
+
   options: {
-	  
+
 		id: 'groups',
 		path: '/os/groups',
-		
+
 		params: {
 			uid: /^\w+$/,
 			prop: /groupname|password|gid|users/
 		},
-		
+
 		api: {
-			
+
 			version: '1.0.0',
-			
+
 			routes: {
 				get: [
 					{
@@ -45,11 +45,11 @@ module.exports = new Class({
 					},
 				]
 			},
-			
+
 		},
   },
   get_group: function (req, res, next){
-	
+
 	if(req.params.gid){
 		passwd.getGroup({'groupname': req.params.gid}, function(err, group){
 			if(err){
@@ -74,25 +74,24 @@ module.exports = new Class({
   get: function (req, res, next){
 
 		////console.log('get groups');
-		var groups = passwd.getGroups();
-		var groups_data = [];
-		
+		let groups = passwd.getGroups();
+		let groups_data = [];
+
 		groups.on('group', function(group) {
 			////console.log('user');
 			////console.log(JSON.stringify(user));
 			groups_data.push(group);
 		});
-		
+
 		groups.on('end', function() {
 			res.json(groups_data);
 		});
   },
   initialize: function(options){
-	
+
 		this.parent(options);//override default options
-		
+
 		this.log('os-groups', 'info', 'os-groups started');
   },
-	
-});
 
+});

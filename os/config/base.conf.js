@@ -1,6 +1,6 @@
 'use strict'
 
-var App = require('node-express-app');
+const App = require('node-express-app');
 
 
 module.exports = new Class({

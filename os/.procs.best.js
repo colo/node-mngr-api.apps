@@ -1,20 +1,20 @@
 'use strict'
 
-var debug = require('debug')('api:apps:os:procs');
-var debug_internals = require('debug')('api:apps:os:procs:Internals')
+let debug = require('debug')('api:apps:os:procs');
+let debug_internals = require('debug')('api:apps:os:procs:Internals')
 
-var fs = require('fs')
-var procfs = require('procfs-stats'),
+let fs = require('fs')
+let procfs = require('procfs-stats'),
     Q = require('q'),
     async = require("async");
 
-// var path = require('path'),
+// let path = require('path'),
 // 		exec = require('child_process').exec,
 // 		Q = require('q');
 
-// var chokidar = require('chokidar')
-// var watch = require('node-watch')
-// var watchr = require('watchr')
+// let chokidar = require('chokidar')
+// let watch = require('node-watch')
+// let watchr = require('watchr')
 
 const App =  process.env.NODE_ENV === 'production'
       ? require('./config/prod.conf')

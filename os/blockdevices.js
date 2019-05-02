@@ -1,6 +1,6 @@
 'use strict'
 
-var path = require('path'),
+const path = require('path'),
 		fs = require('fs'),
 		BlockDevice = require('blockdevice');
 
@@ -110,11 +110,11 @@ module.exports = new Class({
 		this.log('os-blockdevices', 'info', 'os-blockdevices started');
   },
   _return_stats: function(device){
-		var stats_info = Object.clone(this.stats_info);
+		let stats_info = Object.clone(this.stats_info);
 		//console.log('path /sys/block/'+device+'/stat');
 		//console.log(fs.readFileSync('/sys/block/'+device+'/stat', 'ascii').clean().split(' '));
 
-		var device_stats = fs.readFileSync('/sys/block/'+device+'/stat', 'ascii').clean().split(' ');
+		let device_stats = fs.readFileSync('/sys/block/'+device+'/stat', 'ascii').clean().split(' ');
 
 		Array.each(this._stats_info_order, function(key, index){
 			stats_info[key] = device_stats[index];
@@ -221,7 +221,7 @@ module.exports = new Class({
 				if(this.options.scan.test(file)){
 					//this.devices[file] = {};
 
-					var device = new BlockDevice({
+					let device = new BlockDevice({
 						path: '/dev/'+file,
 						// also, we only want to read
 						mode: 'r',
@@ -229,7 +229,7 @@ module.exports = new Class({
 
 					device.open( function( error ) {
 
-						var info = {};
+						let info = {};
 
 						// You should do proper error handling
 						// here, but for the sake of simplicity
@@ -250,7 +250,7 @@ module.exports = new Class({
 								//console.log('block device string: '+/[A-Za-z]*/.exec(file));
 								//console.log('block device: '+file);
 
-								var disk = /[A-Za-z]*/.exec(file);//return string device only
+								let disk = /[A-Za-z]*/.exec(file);//return string device only
 								//this.devices[disk]['partitions'] = {};
 								if(!this.devices[disk]){
 									this.devices[disk] = {};

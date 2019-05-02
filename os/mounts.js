@@ -1,6 +1,6 @@
 'use strict'
 
-var path = require('path'),
+const path = require('path'),
 		exec = require('child_process').exec,
 		Q = require('q');
 
@@ -96,7 +96,7 @@ module.exports = new Class({
 
   },
   _mounts: function(mount){
-		var deferred = Q.defer();
+		let deferred = Q.defer();
 
 		if(mount){//if mount param
 			if(this.mounts.length == 0){//if mounts[] empty, call without params
@@ -122,21 +122,21 @@ module.exports = new Class({
 		}
 		else{
 			this.mounts = [];
-			var child = exec(
+			let child = exec(
 				this.command,
 				function (err, stdout, stderr) {
 
 					if (err) deferred.reject(err);
 
-					var data = stdout.split('\n');
+					let data = stdout.split('\n');
 
 					//drives.splice(0, 1);
 					//drives.splice(-1, 1);
-					//var mounts = [];
+					//let mounts = [];
 					data.each(function(item, index){
 						if(index != 0 && index != data.length -1 ){
 							////console.log(item.clean().split(' '));
-							var tmp = item.clean().split(' ');
+							let tmp = item.clean().split(' ');
 							this.mounts.push({
 								fs: tmp[0],
 								type: tmp[1],

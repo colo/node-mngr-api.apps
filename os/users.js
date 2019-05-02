@@ -1,31 +1,31 @@
 'use strict'
 
-var path = require('path'),
+const path = require('path'),
 		passwd = require('etc-passwd'),
 		uidToUsername = require("uid-username");
-	
+
 const App =  process.env.NODE_ENV === 'production'
       ? require('./config/prod.conf')
       : require('./config/dev.conf');
 
 module.exports = new Class({
   Extends: App,
-  
-  
+
+
   options: {
-	  
+
 		id: 'users',
 		path: '/os/users',
-		
+
 		params: {
 			uid: /^\w+$/,
 			prop: /username|password|uid|gid|comments|home|shell/
 		},
-		
+
 		api: {
-			
+
 			version: '1.0.0',
-			
+
 			routes: {
 				get: [
 					{
@@ -45,12 +45,12 @@ module.exports = new Class({
 					},
 				]
 			},
-			
+
 		},
   },
   get_user: function (req, res, next){
 
-		var getUser = function(username){
+		let getUser = function(username){
 			passwd.getUser({'username': username}, function(err, user){
 				if(err){
 					//console.error(err);
@@ -69,7 +69,7 @@ module.exports = new Class({
 
 		//res.json({info: 'users'});
 		if(req.params.uid){
-			var condition = /^(0|[1-9][0-9]*)$/;//numeric uid
+			let condition = /^(0|[1-9][0-9]*)$/;//numeric uid
 
 			if(condition.exec(req.params.uid) != null){//uid param is numeric, must detect username
 				uidToUsername(req.params.uid, function (err, username) {
@@ -98,10 +98,10 @@ module.exports = new Class({
 	  //console.log('users param:');
 	  //console.log(req.params);
 	  //console.log(req.path);
-	  
-	  
-		var users = passwd.getUsers();
-		var users_data = [];
+
+
+		let users = passwd.getUsers();
+		let users_data = [];
 
 		users.on('user', function(user) {
 			////console.log('user');
@@ -119,14 +119,13 @@ module.exports = new Class({
 			////console.log(users);
 			//res.json(users);
 		//});
-	  
+
   },
   initialize: function(options){
-	
+
 		this.parent(options);//override default options
-		
+
 		this.log('os-users', 'info', 'os-users started');
   },
-	
-});
 
+});

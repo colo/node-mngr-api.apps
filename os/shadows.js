@@ -1,6 +1,6 @@
 'use strict'
 
-var path = require('path'),
+const path = require('path'),
 		passwd = require('etc-passwd'),
 		uidToUsername = require("uid-username");
 
@@ -8,25 +8,25 @@ const App =  process.env.NODE_ENV === 'production'
       ? require('./config/prod.conf')
       : require('./config/dev.conf');
 
-	
+
 module.exports = new Class({
   Extends: App,
-  
-  
+
+
   options: {
-	  
+
 		id: 'shadows',
 		path: '/os/shadows',
-		
+
 		params: {
 			uid: /^\w+$/,
 			prop: /username|password|lastchg|min|max|warn|inactive|expire|flag/
 		},
-		
+
 		api: {
-			
+
 			version: '1.0.0',
-			
+
 			routes: {
 				get: [
 					{
@@ -46,7 +46,7 @@ module.exports = new Class({
 					},
 				]
 			},
-			
+
 		},
   },
   get_shadow: function (req, res, next){
@@ -54,7 +54,7 @@ module.exports = new Class({
 		//console.log(req.params);
 		//console.log(req.path);
 
-		var getShadow = function(username){
+		let getShadow = function(username){
 			passwd.getShadow({'username': username}, function(err, shadow){
 			if(err){
 				//console.error(err);
@@ -72,7 +72,7 @@ module.exports = new Class({
 		}
 		//res.json({info: 'shadows'});
 		if(req.params.uid){
-			var condition = /^(0|[1-9][0-9]*)$/;//numeric uid
+			let condition = /^(0|[1-9][0-9]*)$/;//numeric uid
 
 			if(condition.exec(req.params.uid) != null){//uid param is numeric, must detect username
 				uidToUsername(req.params.uid, function (err, username) {
@@ -100,19 +100,19 @@ module.exports = new Class({
 		}
   },
   get: function (req, res, next){
-		var shadows = passwd.getShadows();
-		var shadows_data = [];
-		
+		let shadows = passwd.getShadows();
+		let shadows_data = [];
+
 		shadows.on('shadow', function(shadow) {
 			////console.log('user');
 			////console.log(JSON.stringify(user));
 			shadows_data.push(shadow);
 		});
-		
+
 		shadows.on('end', function() {
 			res.json(shadows_data);
 		});
-		
+
 		//doens't work
 		//passwd.getShadows(function(shadows) {
 			////console.log('get shadows func');
@@ -127,20 +127,19 @@ module.exports = new Class({
 			 * change allowed role for admin on this app
 			 * */
 			Object.each(this.options.api.routes, function(routes, verb){
-				
+
 				if(verb != 'all'){
 					Array.each(routes, function(route){
 						route.roles = ['admin']
 					});
 				}
-				
+
 			});
 		}
-		
+
 		this.parent(options);//override default options
-		
+
 		this.log('os-shadows', 'info', 'os-shadows started');
   },
-	
-});
 
+});
