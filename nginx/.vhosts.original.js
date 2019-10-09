@@ -11,18 +11,14 @@ const App =  process.env.NODE_ENV === 'production'
       ? require('./config/vhosts/prod.conf')
       : require('./config/vhosts/dev.conf');
 
-const Debug = require('debug')
-const debug = Debug('apps:nginx')
-const async = require('async')
-
 module.exports = new Class({
   Extends: App,
 
 
   add: function(req, res, next){
-		debug(req.body);
-		debug(req.params);
-		debug(req.query);
+		console.log(req.body);
+		console.log(req.params);
+		console.log(req.query);
 		//throw new Error();
 
 		this.comments = (req.query && req.query.comments == "false") ? false : true;
@@ -181,40 +177,20 @@ module.exports = new Class({
 	 * status = 206 partial list | 200 full list
 	 * */
 	get: function(req, res, next){
-		debug('get %o', req.body)
 
 		this.comments = (req.query && req.query.comments == "false") ? false : true;
 
-		let uri, index, prop
-		if(req.body && req.body.uri){
-			uri = req.body.uri
-		}
-		else{
-			uri = req.params.uri;
-		}
+		var uri = req.params.uri;
 
-		if(req.body && req.body.index){
-			index = req.body.index
-		}
-		else if(!req.body){
-			// is Numberic index or a property String - mootols 1.6 vs 1.5
-			index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
-		}
+		// is Numberic index or a property String - mootols 1.6 vs 1.5
+		var index = (Number.convert) ? Number.convert(req.params.prop_or_index) : Number.from(req.params.prop_or_index);
 
-		if(req.body && req.body.prop){
-			prop = req.body.prop
-		}
-		else if(!req.body){
-			//if index was String, take it as property
-			prop = (index == null) ? req.params.prop_or_index : req.params.prop;
-		}
+		//if index was String, take it as property
+		var prop = (index == null) ? req.params.prop_or_index : req.params.prop;
 
 		var callback = function(scaned_vhosts){
-			debug('get %o %o %s %d', req.body, uri, prop, index)
-			// process.exit(1)
-
-			//debug('---scaned_vhosts---');
-			//debug(scaned_vhosts);
+			//console.log('---scaned_vhosts---');
+			//console.log(scaned_vhosts);
 
 			var send = null;
 
@@ -223,34 +199,26 @@ module.exports = new Class({
 				//var read_vhosts = this.search_unique_vhost(vhosts, req.params.uri);
 				var read_vhosts = this.search_vhost(scaned_vhosts, uri);
 
-				// debug('get read_vhosts %o', read_vhosts)
-				// process.exit(1)
 
-				// if(read_vhosts.length == 0){//no match
-				if(Object.getLength(read_vhosts) === 0){
+				if(read_vhosts.length == 0){//no match
 
 					this.fireEvent(this.ON_VHOST_NOT_FOUND, [req, res, next, [uri]]);
 
 				}
 				else{
 
-					// if(read_vhosts.length == 1)
-					if(Object.getLength(read_vhosts) === 1)//if only one match, should return a vhost {}, not an [] of vhosts
-						read_vhosts = read_vhosts[Object.keys(read_vhosts)[0]];
+					if(read_vhosts.length == 1)//if only one match, should return a vhost {}, not an [] of vhosts
+						read_vhosts = read_vhosts[0];
 
 					//with {uri,file} info, read whole vhost config
 					this.read_vhosts_full(read_vhosts, function(cfg){
 
-						debug('get read_vhosts_full %o', cfg)
-						// process.exit(1)
-
-						if(prop || index){
+						if(req.params.prop_or_index){
 						//if(index >= 0 || prop != undefined){
 
-							// if(cfg instanceof Array){//multiple vhosts
-							if(!cfg.listen || cfg.server_name){
+							if(cfg instanceof Array){//multiple vhosts
 
-								if(index != null && !Number.isNaN(index)){//search for vhost matching index on []
+								if(index != null){//search for vhost matching index on []
 
 									if(cfg[index]){//exist
 
@@ -280,41 +248,19 @@ module.exports = new Class({
 								}
 								else{//no index sent, search for matching property on every vhost on []
 
-									// var props = [];
-									let props = {}
-									let cfg_count = 0
-									Object.each(cfg, function(vhost, uri){
-										debug('vhost %o', vhost)
-										// Array.each(vhost, function(real_vhost, index){
-										for(let index = 0; index < vhost.length; index++){
-											let real_vhost = vhost[index]
-											debug('vhost %o', real_vhost)
-											// process.exit(1)
+									var props = [];
+									Array.each(cfg, function(vhost, index){
+											if(vhost[prop]){
+												props[index] = vhost[prop];
+											}
+									});
 
-												if(real_vhost[prop]){
-													if(!props[uri]) props[uri] = []
-
-													props[uri][index] = real_vhost[prop];
-												}
-
-												if(cfg_count === Object.getLength(cfg) - 1 && index === vhost.length - 1){
-													// if(props.length > 0){
-													if(Object.getLength(props) > 0 ){
-														this.fireEvent(this.ON_VHOST_PROP_FOUND, [req, res, next, [cfg, props, prop, read_vhosts]]);
-													}
-													else{
-														this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [req, res, next, [cfg, props, prop, read_vhosts]]);
-													}
-												}
-										// }.bind(this))
-										}
-
-										cfg_count++
-									}.bind(this))
-
-
-
-
+									if(props.length > 0){
+										this.fireEvent(this.ON_VHOST_PROP_FOUND, [req, res, next, [cfg, props, prop, read_vhosts]]);
+									}
+									else{
+										this.fireEvent(this.ON_VHOST_PROP_NOT_FOUND, [req, res, next, [cfg, props, prop, read_vhosts]]);
+									}
 								}
 							}
 							else{//single vhosts
@@ -370,8 +316,8 @@ module.exports = new Class({
 	 *
 	 * */
 	update: function(req, res, next){
-		debug(req.body);
-		debug(req.params);
+		console.log(req.body);
+		console.log(req.params);
 		//throw new Error();
 
 		this.comments = (req.query && req.query.comments == "false") ? false : true;
@@ -530,14 +476,14 @@ module.exports = new Class({
 		 * */
 		this.addEvent(this.ON_VHOST_NOT_FOUND, function(req, res, next, params){
 			if(req.method == 'GET' || req.method == 'PUT' || req.method == 'DELETE'){
-				debug('GET/PUT: ON_VHOST_NOT_FOUND');
+				console.log('GET/PUT: ON_VHOST_NOT_FOUND');
 				var uri = params[0];
 				res.status(404).json({error: 'URI/server_name: '+uri+' not Found'});
 			}
 		}.bind(this));
 
 		this.addEvent(this.ON_VHOST_INDEX_NOT_FOUND, function(req, res, next, params){
-			debug('ON_VHOST_INDEX_NOT_FOUND');
+			console.log('ON_VHOST_INDEX_NOT_FOUND');
 			var cfg = params[0];
 			var index = params[1];
 			var read_vhosts = params[2];
@@ -547,7 +493,7 @@ module.exports = new Class({
 		}.bind(this));
 
 		this.addEvent(this.ON_VHOST_ERROR, function(req, res, next, params){
-			debug('ON_VHOST_ERROR');
+			console.log('ON_VHOST_ERROR');
 			var error = params[0];
 			res.status(500).json({error: error});
 		}.bind(this));
@@ -563,13 +509,13 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_NO_VHOST, function(req, res, next, params){
 			if(req.method == 'POST'){
-				debug('POST: ON_NO_VHOST');
+				console.log('POST: ON_NO_VHOST');
 				var scaned_vhosts = params[0];
 
 				var post_val = this.post_value(req);
 				var post_path_available = this.post_path_available(req);
 
-				debug(post_path_available);
+				console.log(post_path_available);
 
 				if(post_val && post_val['server_name']){//hast the minimun requirement, a server_name
 
@@ -591,13 +537,13 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_VHOST_NOT_FOUND, function(req, res, next, params){
 			if(req.method == 'POST'){
-				debug('POST: ON_VHOST_NOT_FOUND');
+				console.log('POST: ON_VHOST_NOT_FOUND');
 				var uri = params[0];
 
 				var post_val = this.post_value(req);
 				var post_path_available = this.post_path_available(req);
 
-				debug(post_path_available);
+				console.log(post_path_available);
 
 				if(post_val){//has the minimun requirement, a server_name
 					post_val['server_name'] = uri;
@@ -619,14 +565,14 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_VHOST_FOUND, function(req, res, next, params){
 			if(req.method == 'POST'){
-				debug('POST: ON_VHOST_FOUND');
+				console.log('POST: ON_VHOST_FOUND');
 				var cfg = params[0];
 				var read_vhosts = params[1];
 
 				var post_val = this.post_value(req);
 				var post_path_available = this.post_path_available(req);
 
-				debug(read_vhosts);
+				console.log(read_vhosts);
 
 				if(post_val){//has the minimun requirement, a server_name
 
@@ -670,7 +616,7 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_NO_VHOST, function(req, res, next, params){
 			if(req.method == 'DELETE'){
-				debug('DELETE: ON_NO_VHOST');
+				console.log('DELETE: ON_NO_VHOST');
 				var scaned_vhosts = params[0];
 
 				res.status(500).json({error: 'URI/server_name not specified.'});
@@ -680,7 +626,7 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_VHOST_FOUND, function(req, res, next, params){
 			if(req.method == 'DELETE'){
-				debug('DELETE: ON_VHOST_FOUND');
+				console.log('DELETE: ON_VHOST_FOUND');
 				var cfg = params[0];
 				var read_vhosts = params[1];
 
@@ -712,7 +658,7 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_VHOST_INDEX_FOUND, function(req, res, next, params){
 			if(req.method == 'DELETE'){
-				debug('DELETE: ON_VHOST_INDEX_FOUND');
+				console.log('DELETE: ON_VHOST_INDEX_FOUND');
 				var cfg = params[0];
 				var index = params[1];
 				var read_vhosts = params[2];
@@ -735,7 +681,7 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_NO_VHOST, function(req, res, next, params){
 			if(req.method == 'GET'){
-				debug('GET: ON_NO_VHOST');
+				console.log('GET: ON_NO_VHOST');
 				var scaned_vhosts = params[0];
 
 				var vhosts = [];
@@ -800,7 +746,7 @@ module.exports = new Class({
 				else if(req.query.last != undefined){
 
 					if(req.query.last == '' || !(req.query.last > 0)){
-						//debug('LAST');
+						//console.log('LAST');
 
 						var prev = {};
 						prev.start = prev.end = vhosts.length - 2;
@@ -888,7 +834,7 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_VHOST_INDEX_PROP_FOUND, function(req, res, next, params){
 			if(req.method == 'GET'){
-				debug('GET: ON_VHOST_INDEX_PROP_FOUND');
+				console.log('GET: ON_VHOST_INDEX_PROP_FOUND');
 				var cfg = params[0];
 				var index = params[1];
 				var prop = params[2];
@@ -901,7 +847,7 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_VHOST_INDEX_PROP_NOT_FOUND, function(req, res, next, params){
 			if(req.method == 'GET'){
-				debug('GET: ON_VHOST_INDEX_PROP_NOT_FOUND');
+				console.log('GET: ON_VHOST_INDEX_PROP_NOT_FOUND');
 				var cfg = params[0];
 				var index = params[1];
 				var prop = params[2];
@@ -915,7 +861,7 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_VHOST_PROP_FOUND, function(req, res, next, params){
 			if(req.method == 'GET'){
-				debug('GET: ON_VHOST_PROP_FOUND');
+				console.log('GET: ON_VHOST_PROP_FOUND');
 				var cfg = params[0];
 				var props = params[1];
 				var prop = params[2];
@@ -927,7 +873,7 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_VHOST_PROP_NOT_FOUND, function(req, res, next, params){
 			if(req.method == 'GET'){
-				debug('GET: ON_VHOST_PROP_NOT_FOUND');
+				console.log('GET: ON_VHOST_PROP_NOT_FOUND');
 				var cfg = params[0];
 				var props = params[1];
 				var prop = params[2];
@@ -940,14 +886,14 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_VHOST_INDEX_FOUND, function(req, res, next, params){
 			if(req.method == 'GET'){
-				debug('GET: ON_VHOST_INDEX_FOUND');
+				console.log('GET: ON_VHOST_INDEX_FOUND');
 				var cfg = params[0];
 				var index = params[1];
 				var read_vhosts = params[2];
 
-				/*debug('index: '+index);
-				debug('cfg:');
-				debug(read_vhosts);*/
+				/*console.log('index: '+index);
+				console.log('cfg:');
+				console.log(read_vhosts);*/
 
 				res.json(cfg[index]);
 			}
@@ -955,7 +901,7 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_VHOST_FOUND, function(req, res, next, params){
 			if(req.method == 'GET'){
-				debug('GET: ON_VHOST_FOUND');
+				console.log('GET: ON_VHOST_FOUND');
 				var cfg = params[0];
 				var read_vhosts = params[1];
 
@@ -974,7 +920,7 @@ module.exports = new Class({
 		 * */
 		this.addEvent(this.ON_NO_VHOST, function(req, res, next, params){
 			if(req.method == 'PUT'){
-				debug('PUT: ON_NO_VHOST');
+				console.log('PUT: ON_NO_VHOST');
 				var scaned_vhosts = params[0];
 
 				res.status(500).json({error: 'URI/server_name not specified.'});
@@ -984,7 +930,7 @@ module.exports = new Class({
 
 		var save_index_property = function(req, res, next, params){
 			if(req.method == 'PUT'){
-				debug('PUT: ON_VHOST_INDEX_PROP_FOUND || ON_VHOST_INDEX_PROP_NOT_FOUND');
+				console.log('PUT: ON_VHOST_INDEX_PROP_FOUND || ON_VHOST_INDEX_PROP_NOT_FOUND');
 				var cfg = params[0];
 				var index = params[1];
 				var prop = params[2];
@@ -1003,8 +949,8 @@ module.exports = new Class({
 				var value = {};
 				value[prop] = put_val;
 
-				debug(cfg);
-				debug(value);
+				console.log(cfg);
+				console.log(value);
 
 				cfg[index] = this.cfg_merge(cfg[index], value);
 
@@ -1022,7 +968,7 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_VHOST_INDEX_FOUND, function(req, res, next, params){
 			if(req.method == 'PUT'){
-				debug('PUT: ON_VHOST_INDEX_FOUND');
+				console.log('PUT: ON_VHOST_INDEX_FOUND');
 				var cfg = params[0];
 				var index = params[1];
 				var read_vhosts = params[2];
@@ -1042,7 +988,7 @@ module.exports = new Class({
 
 		var save_property = function(req, res, next, params){
 			if(req.method == 'PUT'){
-				debug('PUT: ON_VHOST_PROP_FOUND || ON_VHOST_PROP_NOT_FOUND');
+				console.log('PUT: ON_VHOST_PROP_FOUND || ON_VHOST_PROP_NOT_FOUND');
 				var cfg = params[0];
 				var props = params[1];
 				var prop = params[2];
@@ -1106,14 +1052,14 @@ module.exports = new Class({
 
 		this.addEvent(this.ON_VHOST_FOUND, function(req, res, next, params){
 			if(req.method == 'PUT'){
-				debug('PUT: ON_VHOST_FOUND');
+				console.log('PUT: ON_VHOST_FOUND');
 				var cfg = params[0];
 				var read_vhosts = params[1];
 
 				var vhosts = [];
 				var put_val = this.put_value(req);
 
-				debug(put_val);
+				console.log(put_val);
 
 				if(cfg instanceof Array){
 
@@ -1215,15 +1161,15 @@ module.exports = new Class({
 
 				if (err) {
 					if(err.code === 'EEXIST'){
-						debug('exists....');
-						debug(file);
-						//debug(conf.nginx.server);
+						console.log('exists....');
+						console.log(file);
+						//console.log(conf.nginx.server);
 
 							//var server = null;
 							try{
 								nginx.create(file, function(err, original_conf) {
 									if (err) {
-										//debug(err);
+										//console.log(err);
 										//return err;
 										throw err;
 									}
@@ -1234,7 +1180,7 @@ module.exports = new Class({
 									if(original_conf.nginx.server){
 
 										if(original_conf.nginx.server instanceof Array){
-											//debug('original_conf.nginx.server instanceof Array');
+											//console.log('original_conf.nginx.server instanceof Array');
 											if(original_conf.nginx.server[index]){
 												if(conf == null){//delete the vhost
 
@@ -1249,9 +1195,9 @@ module.exports = new Class({
 											}
 										}
 										else{
-											//debug('original_conf.nginx.server NO Array');
+											//console.log('original_conf.nginx.server NO Array');
 											if(conf == null){//delete the vhost
-												debug('deleting....');
+												console.log('deleting....');
 												original_conf.nginx._remove('server');
 											}
 											else{
@@ -1324,15 +1270,15 @@ module.exports = new Class({
 			var tmp = [];
 			Array.each(this.options.conf_path[sync], function(dir, index){
 
-				//debug('this.scan_vhosts dir: '+dir);
+				//console.log('this.scan_vhosts dir: '+dir);
 
 				this.scan_vhosts(
 					dir,
 					this.options.conf_ext[sync],
 					function(cfg){
 
-						/*debug('this.scan_vhosts cfg: ');
-						debug(cfg);*/
+						/*console.log('this.scan_vhosts cfg: ');
+						console.log(cfg);*/
 
 						vhosts = vhosts.concat(cfg);
 
@@ -1355,8 +1301,8 @@ module.exports = new Class({
 								return 0;
 							});
 
-							/*debug('this.scan_vhosts vhosts');
-							debug(vhosts);*/
+							/*console.log('this.scan_vhosts vhosts');
+							console.log(vhosts);*/
 
 							callback(vhosts);
 						}
@@ -1368,7 +1314,7 @@ module.exports = new Class({
 
 		}
 		else{
-			////debug(this.options.conf_path[sync]);
+			////console.log(this.options.conf_path[sync]);
 			this.scan_vhosts(
 				this.options.conf_path[sync],
 				this.options.conf_ext[sync],
@@ -1378,8 +1324,8 @@ module.exports = new Class({
 	},
 	scan_vhosts: function(conf_path, ext, callback){
 
-		//debug('----conf_path---');
-		//debug(conf_path);
+		//console.log('----conf_path---');
+		//console.log(conf_path);
 
 		//try{
 		if(fs.statSync(conf_path).isDirectory() == true){
@@ -1391,8 +1337,8 @@ module.exports = new Class({
 			var files = this[conf_path].files
 			var vhosts_full_conf_path = [];
 
-			////debug('----FILES-----');
-			////debug(files);
+			////console.log('----FILES-----');
+			////console.log(files);
 
 			if(files.length > 0){
 
@@ -1416,8 +1362,8 @@ module.exports = new Class({
 						file.charAt(0) != '.'
 					)
 					{
-						//debug('---full_conf_path---');
-						//debug(full_conf_path);
+						//console.log('---full_conf_path---');
+						//console.log(full_conf_path);
 
 						vhosts_full_conf_path.push(full_conf_path);
 
@@ -1427,9 +1373,9 @@ module.exports = new Class({
 					if(index == files.length - 1){
 
 						this.read_vhosts_simple(vhosts_full_conf_path, function(cfg){
-							/*debug('----this.read_vhosts_simple----');
-							debug(vhosts_full_conf_path);
-							debug(cfg);*/
+							/*console.log('----this.read_vhosts_simple----');
+							console.log(vhosts_full_conf_path);
+							console.log(cfg);*/
 
 							callback(cfg);
 						});
@@ -1466,19 +1412,19 @@ module.exports = new Class({
 			Array.each(files, function(file, index){
 
 				this.read_vhosts_simple(file, function(cfg){
-					////debug('---recursive----');
+					////console.log('---recursive----');
 
 
 					tmp_cfg = tmp_cfg.concat(cfg);
 
 					tmp_files.push(file);
 
-					////debug('----tmp_cfg-----');
-					////debug(tmp_cfg);
+					////console.log('----tmp_cfg-----');
+					////console.log(tmp_cfg);
 
 					//if(index == files.length - 1){
 					if(tmp_files.length == files.length){
-						//debug(cfg);
+						//console.log(cfg);
 						callback(tmp_cfg);
 					}
 				});
@@ -1490,7 +1436,7 @@ module.exports = new Class({
 			var file = files;
 			nginx.create(file, function(err, conf) {
 				if (err) {
-					//debug(err);
+					//console.log(err);
 					return;
 				}
 
@@ -1557,8 +1503,8 @@ module.exports = new Class({
 					return 0;
 				});
 
-				/*debug('this.read_vhosts_simple vhosts');
-				debug(vhosts);*/
+				/*console.log('this.read_vhosts_simple vhosts');
+				console.log(vhosts);*/
 
 				callback(vhosts);
 
@@ -1568,25 +1514,78 @@ module.exports = new Class({
 	read_vhosts_full: function(vhosts, callback){
 		var cfg = null;
 
-		if(vhosts && vhosts.file){//one vhost only
+
+		if(vhosts instanceof Array){
+			var tmp_cfg = [];
+
+			//for(var i = 0; i < vhosts.length; i++){
+				//var vhost = vhosts[i];
+
+				//this.read_vhosts_full(vhost, function(cfg){
+					////console.log('---recursive----');
+					////console.log(i);
+
+					//tmp_cfg = tmp_cfg.concat(cfg);
+
+					//if(i == vhosts.length){
+						//callback(tmp_cfg);
+					//}
+				//});
+			//}
+
+			//Array.each(vhosts, function(vhost, i){
+			//var not_full_array = true;
+
+			for(var i = 0; i < vhosts.length; i++){
+				var vhost = vhosts[i];
+
+				this.read_vhosts_full(vhost, function(cfg, vhost){
+
+					////console.log(recursive_index);
+
+
+					var index = vhosts.indexOf(vhost);
+					//console.log('---recursive----');
+					//console.log(vhost);
+					//console.log(index);
+
+					//tmp_cfg = tmp_cfg.concat(cfg);
+					tmp_cfg[index] = Object.clone(cfg);
+
+					//console.log(tmp_cfg);
+
+					//not_full_array = tmp_cfg.contains(undefined);
+
+					if(tmp_cfg.clean().length == vhosts.length){
+
+
+						////console.log(tmp_cfg);
+						callback(tmp_cfg);
+					}
+				});
+			}
+			//}.bind(this));
+
+		}
+		else{
 			var file = vhosts.file;
 			var vhost = vhosts.uri;
 			var index = vhosts.index;
 
 			nginx.create(file, function(err, conf) {
 				if (err) {
-					//debug(err);
+					//console.log(err);
 					return;
 				}
 
 				//don't write to disk when something changes
 				conf.die(file);
 
-				////debug('read_vhost');
-				////debug(conf.nginx.server);
+				////console.log('read_vhost');
+				////console.log(conf.nginx.server);
 
 				//Array.each(conf.nginx.server, function(server){
-					////debug(server.server_name._value.clean().split(" "));
+					////console.log(server.server_name._value.clean().split(" "));
 				//});
 
 				var all_uris = [];
@@ -1645,136 +1644,28 @@ module.exports = new Class({
 
 					}.bind(this));
 
-					//debug('---NO ARRAY----');
-					//debug(server.server_name._value);
+					//console.log('---NO ARRAY----');
+					//console.log(server.server_name._value);
 				}
 
-				////debug(cfg);
+				////console.log(cfg);
 				callback(cfg, vhosts);
 
 			}.bind(this));
 
-		}
-		else {//multiple vhosts
-		// if(vhosts instanceof Array){
-			// var tmp_cfg = [];
-			var tmp_cfg = {};
-			// for(var i = 0; i < vhosts.length; i++){
-				// var vhost = vhosts[i];
-			// debug('read_vhosts_full %o ', vhosts);
-			// process.exit(1)
-			let self = this
-
-			async.eachOf(vhosts, function (vhost, uri, async_eachof_vhost_callback) {
-
-				async.eachOf(vhost, function (real_vhost, index, async_eachof_real_vhost_callback) {
-					self.read_vhosts_full(real_vhost, function(cfg, _vhost){
-						if(!tmp_cfg[uri]) tmp_cfg[uri] = []
-
-						let index = vhost.indexOf(_vhost);
-
-						tmp_cfg[uri][index] = cfg
-
-						async_eachof_real_vhost_callback()
-
-					});
-				}, function (err) {
-					if(err) debug('async_eachof_real_vhost_callback ERROR %o', err)
-
-			    async_eachof_vhost_callback()
-				});
-
-			}, function (err) {
-				if(err) debug('async_eachof_vhost_callback ERROR %o', err)
-
-				debug('FINISH %o', tmp_cfg)
-		    callback(tmp_cfg)
-			});
-
-			// let count_vhosts = 0
-			// Object.each(vhosts, function(vhost, uri){
-			//
-			// 	Array.each(vhost, function(real_vhost, i){
-			//
-			// 		this.read_vhosts_full(real_vhost, function(cfg, _vhost){
-			// 			if(!tmp_cfg[uri]) tmp_cfg[uri] = []
-			//
-			//
-			//
-			// 			let index = vhost.indexOf(_vhost);
-			// 			//debug('---recursive----');
-			// 			//debug(vhost);
-			// 			//debug(index);
-			//
-			// 			//tmp_cfg = tmp_cfg.concat(cfg);
-			// 			// tmp_cfg[index] = Object.clone(cfg);
-			// 			// tmp_cfg[uri][index] = Object.clone(cfg);
-			// 			tmp_cfg[uri][index] = cfg
-			//
-			// 			//debug(tmp_cfg);
-			//
-			// 			//not_full_array = tmp_cfg.contains(undefined);
-			//
-			// 			// if(tmp_cfg.clean().length == vhosts.length){
-			//
-			// 			// process.exit(1)
-			// 			if(Object.getLength(tmp_cfg) == Object.getLength(vhosts)){
-			// 				let finish = 0
-			// 				// let count_cfg = 0
-			// 				Object.each(tmp_cfg, function(vhost, uri){
-			//
-			//
-			// 					if(vhosts[uri].length !== vhost.clean().length){
-			// 						finish = false
-			// 					}
-			// 					else if(finish !== false){
-			// 						finish++
-			// 					}
-			//
-			// 					if(finish === Object.getLength(tmp_cfg) - 1){
-			// 						callback(tmp_cfg)
-			// 					}
-			//
-			// 					debug('-----')
-			// 					// if(count_cfg === Object.getLength(tmp_cfg) - 1 && finish === true)
-			// 					// 	callback(tmp_cfg)
-			// 					//
-			// 					// count_cfg++
-			// 				})
-			// 				// debug('read_vhosts_full %o %o', tmp_cfg);
-			//
-			// 				// if(finish === true)
-			// 				// if(finish === false){
-			// 				// 	process.exit(1)
-			// 				// 	callback(tmp_cfg);
-			// 				// }
-			// 			}
-			// 		});
-			//
-			// 	}.bind(this))
-			//
-			// 	count_vhosts++
-			// }.bind(this))
-
-
-
-			// }
-			//}.bind(this));
-
-		}
-
+		}	//else
 
 	},
   conf_to_obj: function(conf){
-		////debug('---conf_to_obj----');
-		////debug(conf);
+		////console.log('---conf_to_obj----');
+		////console.log(conf);
 
 		var cfg = {};
 		Object.each(conf, function(value, prop){
-			////debug('prop: '+prop);
+			////console.log('prop: '+prop);
 			if(prop.charAt(0) != '_' && prop != 'toString'){
-				////debug('prop: '+prop);
-				////debug('value: '+value._comments);
+				////console.log('prop: '+prop);
+				////console.log('value: '+value._comments);
 
 				if(value instanceof Array){
 					cfg[prop] = [];
@@ -1812,7 +1703,7 @@ module.exports = new Class({
 				else{
 					var propertys = this.conf_to_obj(value);
 
-					////debug(propertys);
+					////console.log(propertys);
 
 					//if(Object.getLength(propertys) > 0){
 						cfg[prop] = Object.merge({
@@ -1831,7 +1722,7 @@ module.exports = new Class({
 						//cfg[prop] = value._value;
 					//}
 
-					////debug(this.conf_to_obj(value));
+					////console.log(this.conf_to_obj(value));
 				}
 			}
 
@@ -1842,21 +1733,21 @@ module.exports = new Class({
 
 	obj_to_conf: function(obj, callback){
 
-		//debug('obj_to_conf');
-		//debug(obj);
+		//console.log('obj_to_conf');
+		//console.log(obj);
 
 		fs.writeFile(os.tmpdir()+'/nginx-conf', '', (err) => {
 			if (err) throw err;
 
 			nginx.create(os.tmpdir()+'/nginx-conf', function(err, conf) {
 				if (err) {
-					//debug(err);
+					//console.log(err);
 					return;
 				}
 
 				conf.die(os.tmpdir()+'/nginx-conf');
 
-				////debug(conf.toString());
+				////console.log(conf.toString());
 				conf.nginx._add('server');
 
 				Object.each(obj, function(value, prop){
@@ -1886,8 +1777,8 @@ module.exports = new Class({
 
 									var comments = null;
 
-									debug('--item--');
-									debug(item);
+									console.log('--item--');
+									console.log(item);
 
 									if(item instanceof Object){//it shouldn't, unless it has comments
 										comments = item['_comments'];
@@ -1926,8 +1817,8 @@ module.exports = new Class({
 						}.bind(this));
 					}
 					else if(value instanceof Object){
-						//debug('OBJECT');
-						//debug(value);
+						//console.log('OBJECT');
+						//console.log(value);
 
 						conf.nginx.server._add(prop);
 
@@ -1943,8 +1834,8 @@ module.exports = new Class({
 							else{
 								var comments = null;
 
-								//debug('--VAL--');
-								//debug(val);
+								//console.log('--VAL--');
+								//console.log(val);
 
 								if(val instanceof Object){//it shouldn't, unless it has comments
 									comments = val['_comments'];
@@ -1974,7 +1865,7 @@ module.exports = new Class({
 					}
 				}.bind(this));
 
-				////debug(conf);
+				////console.log(conf);
 
 				callback(conf);
 			}.bind(this));
@@ -2113,39 +2004,14 @@ module.exports = new Class({
 	 * vhosts: {uri, file}
 	 * uri: vhost to search
 	 * */
-	// search_vhost: function(vhosts, uri){
-	// 	var read_vhosts = [];
-	//
-	// 	if(!Array.isArray(uri))
-	// 		uri = [uri]
-	//
-	// 	for(var i = 0; i < vhosts.length; i++){//search uri on all vhosts, there may be multiple matchs on same or diferent files
-	// 		for(var j = 0; j < uri.length; j++){
-	// 			if(vhosts[i].uri == uri[j]){//found
-	// 				read_vhosts.push(vhosts[i]);
-	// 			}
-	// 		}
-	//
-	//
-	// 	}
-	//
-	// 	return read_vhosts;
-	// },
 	search_vhost: function(vhosts, uri){
-		var read_vhosts = {};
-
-		if(!Array.isArray(uri))
-			uri = [uri]
+		var read_vhosts = [];
 
 		for(var i = 0; i < vhosts.length; i++){//search uri on all vhosts, there may be multiple matchs on same or diferent files
-			for(var j = 0; j < uri.length; j++){
-				if(vhosts[i].uri == uri[j]){//found
-					if(!read_vhosts[vhosts[i].uri]) read_vhosts[vhosts[i].uri] = []
-					// read_vhosts.push(vhosts[i]);
-					read_vhosts[vhosts[i].uri].push(vhosts[i])
-				}
-			}
 
+			if(vhosts[i].uri == uri){//found
+				read_vhosts.push(vhosts[i]);
+			}
 
 		}
 

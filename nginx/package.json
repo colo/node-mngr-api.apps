@@ -11,6 +11,8 @@
     "node": ">= 0.10.21"
   },
   "dependencies": {
+    "async": "^3.1.0",
+    "debug": "^4.1.1",
     "lockfile": "^1.0.3",
     "mootools": "1.4",
     "nginx-conf": "^1.3.0"
