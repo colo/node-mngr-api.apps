@@ -235,8 +235,8 @@ module.exports = new Class({
 				else{
 
 					// if(read_vhosts.length == 1)
-					if(Object.getLength(read_vhosts) === 1)//if only one match, should return a vhost {}, not an [] of vhosts
-						read_vhosts = read_vhosts[Object.keys(read_vhosts)[0]];
+					// if(Object.getLength(read_vhosts) === 1)//if only one match, should return a vhost {}, not an [] of vhosts
+					// 	read_vhosts = read_vhosts[Object.keys(read_vhosts)[0]];
 
 					//with {uri,file} info, read whole vhost config
 					this.read_vhosts_full(read_vhosts, function(cfg){
