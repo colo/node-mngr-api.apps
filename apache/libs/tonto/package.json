@@ -53,7 +53,7 @@
   "dependencies": {
     "change-case": "2.3.x",
     "is-js": "0.1.x",
-    "js-yaml": "3.3.x",
+    "js-yaml": "3.13.x",
     "methodical": "0.0.x"
   },
   "deprecated": false,
