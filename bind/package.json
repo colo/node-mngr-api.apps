@@ -13,7 +13,7 @@
   "dependencies": {
     "dns-zonefile": "^0.1.15",
     "lockfile": "^1.0.3",
-    "npm": "^3.8.3"
+    "npm": "^6.13.4"
   },
   "devDependencies": {},
   "optionalDependencies": {},
