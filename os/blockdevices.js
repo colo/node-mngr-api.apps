@@ -30,7 +30,12 @@ module.exports = new Class({
 		write_ticks: null,     //milliseconds  total wait time for write requests
 		in_flight: null,       //requests      number of I/Os currently in flight
 		io_ticks: null,        //milliseconds  total time this block device has been active
-		time_in_queue: null   //milliseconds  total wait time for all requests
+		time_in_queue: null,   //milliseconds  total wait time for all requests
+		discard_ios: null, 			//requests      number of discard I/Os processed
+		discard_merges: null, 	//requests      number of discard I/Os merged with in-queue I/O
+		discard_sectors: null, 	//sectors       number of sectors discarded
+		discard_ticks: null			//milliseconds  total wait time for discard requests
+
 	},
 
 	_stats_info_order: [
@@ -44,7 +49,11 @@ module.exports = new Class({
 		'write_ticks',
 		'in_flight',
 		'io_ticks',
-		'time_in_queue'
+		'time_in_queue',
+		'discard_ios',
+		'discard_merges',
+		'discard_sectors',
+		'discard_ticks',
 	],
 
   options: {
