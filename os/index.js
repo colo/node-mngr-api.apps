@@ -23,7 +23,7 @@ module.exports = new Class({
 			let json = {};
 			Object.each(os, function(item, key){
 
-				if(key != 'getNetworkInterfaces' && key != 'networkInterfaces')//deprecated func && use internal func
+				if(key !== 'getNetworkInterfaces' && key !== 'networkInterfaces' && key !== 'getPriority' && key !== 'setPriority')//deprecated func && use internal func
 					json[key] = (typeof(item) == 'function') ? os[key]() : os[key];
 
 				if(key == 'networkInterfaces'){
