@@ -1,5 +1,5 @@
 {
-  "name": "login",
+  "name": "dirvish",
   "version": "0.0.1",
   "description": "Login App",
   "author": {
@@ -11,6 +11,7 @@
     "node": ">= 0.10.21"
   },
   "dependencies": {
+    "login": "git+https://github.com/colo/node-dirvish.git",
     "q": "^1.4.1"
   },
   "devDependencies": {},
@@ -22,7 +23,6 @@
     }
   ],
   "keywords": [
-    "login",
-    "authentication"
+    "dirvish"
   ]
 }
